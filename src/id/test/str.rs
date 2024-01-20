@@ -37,5 +37,17 @@ mod serde {
         let got = serde_json::to_string(&id1).unwrap();
         assert_eq!(got, "\"1\"")
     }
+}
 
+#[cfg(feature = "fake")]
+mod fake {
+    use fake::{Fake, Faker};
+    use crate::Id;
+    use crate::id::test::str::Foo;
+
+    #[test]
+    fn test_fake() {
+        let id1: Id<Foo, String> = Faker.fake();
+        assert_ne!(id1.inner, "");
+    }
 }

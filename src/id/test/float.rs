@@ -69,3 +69,22 @@ mod serde {
         assert_eq!(got, "1.0");
     }
 }
+
+#[cfg(feature = "fake")]
+mod fake {
+    use fake::{Fake, Faker};
+    use crate::Id;
+    use crate::id::test::float::Foo;
+
+    #[test]
+    fn test_fake_f64() {
+        let id1: Id<Foo, f64> = Faker.fake();
+        assert_ne!(id1.inner, 0.0);
+    }
+
+    #[test]
+    fn test_fake_f32() {
+        let id1: Id<Foo, f32> = Faker.fake();
+        assert_ne!(id1.inner, 0.0);
+    }
+}

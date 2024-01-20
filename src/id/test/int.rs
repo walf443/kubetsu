@@ -126,3 +126,69 @@ mod serde {
         assert_eq!("1".to_string(), got);
     }
 }
+
+#[cfg(feature = "fake")]
+mod fake {
+    use fake::{Fake, Faker};
+    use crate::Id;
+    use crate::id::test::int::Foo;
+
+    #[test]
+    fn test_fake_i128() {
+        let id1: Id<Foo, i128> = Faker.fake();
+        assert_ne!(id1.inner, 0);
+    }
+
+    #[test]
+    fn test_fake_u128() {
+        let id1: Id<Foo, u128> = Faker.fake();
+        assert_ne!(id1.inner, 0);
+    }
+    #[test]
+    fn test_fake_i64() {
+        let id1: Id<Foo, i64> = Faker.fake();
+        assert_ne!(id1.inner, 0);
+    }
+
+    #[test]
+    fn test_fake_u64() {
+        let id1: Id<Foo, u64> = Faker.fake();
+        assert_ne!(id1.inner, 0);
+    }
+
+    #[test]
+    fn test_fake_i32() {
+        let id1: Id<Foo, i32> = Faker.fake();
+        assert_ne!(id1.inner, 0);
+    }
+
+    #[test]
+    fn test_fake_u32() {
+        let id1: Id<Foo, u32> = Faker.fake();
+        assert_ne!(id1.inner, 0);
+    }
+
+    #[test]
+    fn test_fake_i16() {
+        let id1: Id<Foo, i16> = Faker.fake();
+        assert_ne!(id1.inner, 0);
+    }
+
+    #[test]
+    fn test_fake_u16() {
+        let id1: Id<Foo, u16> = Faker.fake();
+        assert_ne!(id1.inner, 0);
+    }
+
+    #[test]
+    fn test_fake_i8() {
+        let id1: Id<Foo, i8> = Faker.fake();
+        assert_ne!(id1.inner, 0);
+    }
+
+    #[test]
+    fn test_fake_u8() {
+        let id1: Id<Foo, u8> = Faker.fake();
+        assert_ne!(id1.inner, 0);
+    }
+}
