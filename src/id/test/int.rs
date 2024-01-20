@@ -129,9 +129,9 @@ mod serde {
 
 #[cfg(feature = "fake")]
 mod fake {
-    use fake::{Fake, Faker};
-    use crate::Id;
     use crate::id::test::int::Foo;
+    use crate::Id;
+    use fake::{Fake, Faker};
 
     #[test]
     fn test_fake_i128() {

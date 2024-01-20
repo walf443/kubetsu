@@ -27,8 +27,8 @@ fn test_str_clone() {
 
 #[cfg(feature = "serde")]
 mod serde {
-    use crate::Id;
     use crate::id::test::str::Foo;
+    use crate::Id;
 
     #[test]
     fn test_serialize() {
@@ -41,9 +41,9 @@ mod serde {
 
 #[cfg(feature = "fake")]
 mod fake {
-    use fake::{Fake, Faker};
-    use crate::Id;
     use crate::id::test::str::Foo;
+    use crate::Id;
+    use fake::{Fake, Faker};
 
     #[test]
     fn test_fake() {

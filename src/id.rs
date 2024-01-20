@@ -16,14 +16,14 @@ use sqlx::encode::IsNull;
 use sqlx::error::BoxDynError;
 #[cfg(feature = "sqlx-mysql")]
 use sqlx::mysql::MySqlTypeInfo;
-#[cfg(feature = "sqlx-mysql")]
-use sqlx::MySql;
-#[cfg(feature = "sqlx")]
-use sqlx::{Decode, Encode, Type};
-#[cfg(feature = "sqlx-sqlite")]
-use sqlx::Sqlite;
 #[cfg(feature = "sqlx-sqlite")]
 use sqlx::sqlite::SqliteTypeInfo;
+#[cfg(feature = "sqlx-mysql")]
+use sqlx::MySql;
+#[cfg(feature = "sqlx-sqlite")]
+use sqlx::Sqlite;
+#[cfg(feature = "sqlx")]
+use sqlx::{Decode, Encode, Type};
 
 pub struct Id<T, U> {
     inner: U,
@@ -72,8 +72,8 @@ impl<T, U: Clone> Clone for Id<T, U> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, i128> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_i128(self.inner().clone())
     }
@@ -82,8 +82,8 @@ impl<T> Serialize for Id<T, i128> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, u128> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_u128(self.inner().clone())
     }
@@ -102,8 +102,8 @@ impl<T> Serialize for Id<T, i64> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, u64> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_u64(self.inner().clone())
     }
@@ -122,8 +122,8 @@ impl<T> Serialize for Id<T, i32> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, u32> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_u32(self.inner().clone())
     }
@@ -132,8 +132,8 @@ impl<T> Serialize for Id<T, u32> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, i16> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_i16(self.inner().clone())
     }
@@ -142,8 +142,8 @@ impl<T> Serialize for Id<T, i16> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, u16> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_u16(self.inner().clone())
     }
@@ -152,8 +152,8 @@ impl<T> Serialize for Id<T, u16> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, i8> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_i8(self.inner().clone())
     }
@@ -162,8 +162,8 @@ impl<T> Serialize for Id<T, i8> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, u8> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_u8(self.inner().clone())
     }
@@ -172,8 +172,8 @@ impl<T> Serialize for Id<T, u8> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, f64> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_f64(self.inner().clone())
     }
@@ -182,8 +182,8 @@ impl<T> Serialize for Id<T, f64> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, f32> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_f32(self.inner().clone())
     }
@@ -192,8 +192,8 @@ impl<T> Serialize for Id<T, f32> {
 #[cfg(feature = "serde")]
 impl<T> Serialize for Id<T, String> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_str(self.inner())
     }

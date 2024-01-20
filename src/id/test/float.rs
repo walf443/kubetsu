@@ -48,8 +48,8 @@ fn test_clone_f32() {
 
 #[cfg(feature = "serde")]
 mod serde {
-    use crate::Id;
     use crate::id::test::float::Foo;
+    use crate::Id;
 
     #[test]
     fn test_serialize_f32() {
@@ -72,9 +72,9 @@ mod serde {
 
 #[cfg(feature = "fake")]
 mod fake {
-    use fake::{Fake, Faker};
-    use crate::Id;
     use crate::id::test::float::Foo;
+    use crate::Id;
+    use fake::{Fake, Faker};
 
     #[test]
     fn test_fake_f64() {

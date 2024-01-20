@@ -11,7 +11,7 @@ serde = ["dep:serde", "dep:serde_json"]
 fake = ["dep:fake"]
 sqlx = ["dep:sqlx", "dep:tokio"]
 sqlx-mysql = ["sqlx", "sqlx/mysql"]
-sqlx-sqlite= ["sqlx", "sqlx/sqlite"]
+sqlx-sqlite = ["sqlx", "sqlx/sqlite"]
 
 [dependencies]
 serde = { version = "1", optional = true }
