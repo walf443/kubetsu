@@ -20,6 +20,10 @@ use sqlx::mysql::MySqlTypeInfo;
 use sqlx::MySql;
 #[cfg(feature = "sqlx")]
 use sqlx::{Decode, Encode, Type};
+#[cfg(feature = "sqlx-sqlite")]
+use sqlx::Sqlite;
+#[cfg(feature = "sqlx-sqlite")]
+use sqlx::sqlite::SqliteTypeInfo;
 
 pub struct Id<T, U> {
     inner: U,
@@ -206,6 +210,17 @@ impl<T, U: sqlx::Type<sqlx::MySql>> Type<MySql> for Id<T, U> {
     }
 }
 
+#[cfg(feature = "sqlx-sqlite")]
+impl<T, U: sqlx::Type<sqlx::Sqlite>> Type<Sqlite> for Id<T, U> {
+    fn type_info() -> SqliteTypeInfo {
+        <U as Type<Sqlite>>::type_info()
+    }
+
+    fn compatible(ty: &SqliteTypeInfo) -> bool {
+        <U as Type<Sqlite>>::compatible(ty)
+    }
+}
+
 #[cfg(feature = "sqlx-mysql")]
 impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::MySql>> Encode<'_, MySql> for Id<T, U> {
     fn encode_by_ref(&self, buf: &mut <MySql as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
@@ -217,6 +232,14 @@ impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::MySql>> Encode<'_, MySql> for 
 impl<T, U: for<'a> sqlx::Decode<'a, sqlx::MySql>> Decode<'_, MySql> for Id<T, U> {
     fn decode(value: <MySql as HasValueRef<'_>>::ValueRef) -> Result<Self, BoxDynError> {
         let val = <U as Decode<MySql>>::decode(value)?;
+        Ok(Self::new(val))
+    }
+}
+
+#[cfg(feature = "sqlx-sqlite")]
+impl<T, U: for<'a> sqlx::Decode<'a, sqlx::Sqlite>> Decode<'_, Sqlite> for Id<T, U> {
+    fn decode(value: <Sqlite as HasValueRef<'_>>::ValueRef) -> Result<Self, BoxDynError> {
+        let val = <U as Decode<Sqlite>>::decode(value)?;
         Ok(Self::new(val))
     }
 }
