@@ -1,0 +1,19 @@
+[package]
+name = "kubetsu"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+all = ["serde", "fake", "sqlx-mysql"]
+serde = ["dep:serde", "dep:serde_json"]
+fake = ["dep:fake"]
+sqlx = ["dep:sqlx"]
+sqlx-mysql = ["sqlx/mysql"]
+
+[dependencies]
+serde = { version = "1", optional = true }
+serde_json = { version = "1", optional = true }
+fake  = { version = "2", features = ["derive"], optional = true }
+sqlx  = { version = "0", optional = true }
