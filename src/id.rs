@@ -227,6 +227,12 @@ impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::MySql>> Encode<'_, MySql> for 
         <U as Encode<MySql>>::encode(self.inner().clone(), buf)
     }
 }
+#[cfg(feature = "sqlx-sqlite")]
+impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::Sqlite>> Encode<'_, Sqlite> for Id<T, U> {
+    fn encode_by_ref(&self, buf: &mut <Sqlite as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
+        <U as Encode<Sqlite>>::encode(self.inner().clone(), buf)
+    }
+}
 
 #[cfg(feature = "sqlx-mysql")]
 impl<T, U: for<'a> sqlx::Decode<'a, sqlx::MySql>> Decode<'_, MySql> for Id<T, U> {
