@@ -1,13 +1,16 @@
-use std::str::FromStr;
 use crate::Id;
-use sqlx::{AnyPool, FromRow };
-use sqlx::any::{AnyConnectOptions, AnyPoolOptions, install_default_drivers};
+use sqlx::any::{install_default_drivers, AnyConnectOptions, AnyPoolOptions};
+use sqlx::{AnyPool, FromRow};
+use std::str::FromStr;
 
 async fn get_db_conn() -> Result<AnyPool, sqlx::Error> {
     install_default_drivers();
     let connect_info = AnyConnectOptions::from_str("sqlite:").unwrap();
 
-    let pool = AnyPoolOptions::new().connect_with(connect_info).await.unwrap();
+    let pool = AnyPoolOptions::new()
+        .connect_with(connect_info)
+        .await
+        .unwrap();
     Ok(pool)
 }
 

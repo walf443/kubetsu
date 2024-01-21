@@ -1,4 +1,5 @@
 use std::fmt::{Debug, Formatter};
+use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 
 #[cfg(test)]
@@ -8,6 +9,8 @@ mod test;
 use fake::{Dummy, Fake, Faker, Rng};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
+#[cfg(feature = "sqlx-any")]
+use sqlx::any::AnyTypeInfo;
 #[cfg(feature = "sqlx")]
 use sqlx::database::{HasArguments, HasValueRef};
 #[cfg(feature = "sqlx")]
@@ -18,16 +21,14 @@ use sqlx::error::BoxDynError;
 use sqlx::mysql::MySqlTypeInfo;
 #[cfg(feature = "sqlx-sqlite")]
 use sqlx::sqlite::SqliteTypeInfo;
+#[cfg(feature = "sqlx-any")]
+use sqlx::Any;
 #[cfg(feature = "sqlx-mysql")]
 use sqlx::MySql;
 #[cfg(feature = "sqlx-sqlite")]
 use sqlx::Sqlite;
 #[cfg(feature = "sqlx")]
 use sqlx::{Decode, Encode, Type};
-#[cfg(feature = "sqlx-any")]
-use sqlx::Any;
-#[cfg(feature = "sqlx-any")]
-use sqlx::any::AnyTypeInfo;
 
 pub struct Id<T, U> {
     inner: U,
@@ -58,6 +59,12 @@ impl<T, U: Debug> Debug for Id<T, U> {
 impl<T, U: PartialEq> PartialEq for Id<T, U> {
     fn eq(&self, other: &Self) -> bool {
         self.inner().eq(other.inner())
+    }
+}
+
+impl<T, U: PartialEq + Hash> Hash for Id<T, U> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.inner.hash(state)
     }
 }
 
@@ -217,7 +224,8 @@ impl<T> Serialize for Id<T, String> {
 }
 
 #[cfg(feature = "sqlx-any")]
-impl<T, U: sqlx::Type<sqlx::Any>> Type<Any> for Id<T, U> { fn type_info() -> AnyTypeInfo {
+impl<T, U: sqlx::Type<sqlx::Any>> Type<Any> for Id<T, U> {
+    fn type_info() -> AnyTypeInfo {
         <U as Type<Any>>::type_info()
     }
 

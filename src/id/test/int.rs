@@ -1,4 +1,5 @@
 use crate::Id;
+use std::collections::HashMap;
 
 struct Foo {}
 
@@ -38,6 +39,70 @@ fn test_i32_inner() {
 fn test_i32_clone() {
     let id1: Id<Foo, i32> = Id::new(1);
     assert_eq!(id1.clone(), id1);
+}
+
+#[test]
+fn test_hash_key_i64() {
+    let id1: Id<Foo, i64> = Id::new(1);
+    let mut hash: HashMap<Id<Foo, i64>, bool> = HashMap::new();
+    hash.insert(id1.clone(), true);
+    assert_eq!(hash.get(&id1), Some(&true));
+}
+
+#[test]
+fn test_hash_key_u64() {
+    let id1: Id<Foo, u64> = Id::new(1);
+    let mut hash: HashMap<Id<Foo, u64>, bool> = HashMap::new();
+    hash.insert(id1.clone(), true);
+    assert_eq!(hash.get(&id1), Some(&true));
+}
+
+#[test]
+fn test_hash_key_i32() {
+    let id1: Id<Foo, i32> = Id::new(1);
+    let mut hash: HashMap<Id<Foo, i32>, bool> = HashMap::new();
+    hash.insert(id1.clone(), true);
+    assert_eq!(hash.get(&id1), Some(&true));
+}
+
+#[test]
+fn test_hash_key_u32() {
+    let id1: Id<Foo, u32> = Id::new(1);
+    let mut hash: HashMap<Id<Foo, u32>, bool> = HashMap::new();
+    hash.insert(id1.clone(), true);
+    assert_eq!(hash.get(&id1), Some(&true));
+}
+
+#[test]
+fn test_hash_key_i16() {
+    let id1: Id<Foo, i16> = Id::new(1);
+    let mut hash: HashMap<Id<Foo, i16>, bool> = HashMap::new();
+    hash.insert(id1.clone(), true);
+    assert_eq!(hash.get(&id1), Some(&true));
+}
+
+#[test]
+fn test_hash_key_u16() {
+    let id1: Id<Foo, u16> = Id::new(1);
+    let mut hash: HashMap<Id<Foo, u16>, bool> = HashMap::new();
+    hash.insert(id1.clone(), true);
+    assert_eq!(hash.get(&id1), Some(&true));
+}
+
+#[test]
+fn test_hash_key_i8() {
+    let id1: Id<Foo, i8> = Id::new(1);
+    let mut hash: HashMap<Id<Foo, i8>, bool> = HashMap::new();
+    hash.insert(id1.clone(), true);
+    assert_eq!(hash.get(&id1), Some(&true));
+}
+
+#[test]
+fn test_hash_key_u8() {
+    let id1: Id<Foo, u8> = Id::new(1);
+    let mut hash: HashMap<Id<Foo, u8>, bool> = HashMap::new();
+    hash.insert(id1.clone(), true);
+    assert_eq!(hash.get(&id1), Some(&true));
 }
 
 #[cfg(feature = "serde")]
