@@ -50,6 +50,17 @@ struct FooI32 {
 }
 
 #[tokio::test]
+async fn test_query_scalar_i32() {
+    let conn = get_db_conn().await.unwrap();
+    let mut tx = conn.begin().await.unwrap();
+    let id: Id<FooI32, i32> = sqlx::query_scalar("SELECT 1")
+        .fetch_one(&mut *tx)
+        .await
+        .unwrap();
+
+    assert_eq!(id.inner, 1);
+}
+#[tokio::test]
 async fn test_query_as_i32() {
     let conn = get_db_conn().await.unwrap();
     let mut tx = conn.begin().await.unwrap();
@@ -82,6 +93,17 @@ struct FooI16 {
     id: Id<Self, i16>,
 }
 
+#[tokio::test]
+async fn test_query_scalar_i16() {
+    let conn = get_db_conn().await.unwrap();
+    let mut tx = conn.begin().await.unwrap();
+    let id: Id<FooI16, i16> = sqlx::query_scalar("SELECT 1")
+        .fetch_one(&mut *tx)
+        .await
+        .unwrap();
+
+    assert_eq!(id.inner, 1);
+}
 #[tokio::test]
 async fn test_query_as_i16() {
     let conn = get_db_conn().await.unwrap();
@@ -116,6 +138,17 @@ struct FooI8 {
 }
 
 #[tokio::test]
+async fn test_query_scalar_i8() {
+    let conn = get_db_conn().await.unwrap();
+    let mut tx = conn.begin().await.unwrap();
+    let id: Id<FooI8, i8> = sqlx::query_scalar("SELECT 1")
+        .fetch_one(&mut *tx)
+        .await
+        .unwrap();
+
+    assert_eq!(id.inner, 1);
+}
+#[tokio::test]
 async fn test_query_as_i8() {
     let conn = get_db_conn().await.unwrap();
     let mut tx = conn.begin().await.unwrap();
@@ -148,6 +181,17 @@ struct FooStr {
     id: Id<Self, String>,
 }
 
+#[tokio::test]
+async fn test_query_scalar_str() {
+    let conn = get_db_conn().await.unwrap();
+    let mut tx = conn.begin().await.unwrap();
+    let id: Id<FooStr, String> = sqlx::query_scalar("SELECT \"1\"")
+        .fetch_one(&mut *tx)
+        .await
+        .unwrap();
+
+    assert_eq!(id.inner, "1");
+}
 #[tokio::test]
 async fn test_query_as_str() {
     let conn = get_db_conn().await.unwrap();
