@@ -7,10 +7,11 @@ edition = "2021"
 
 [features]
 default  = []
-all = ["serde", "fake", "sqlx-mysql", "sqlx-sqlite"]
+all = ["serde", "fake", "sqlx-mysql", "sqlx-sqlite", "sqlx-any"]
 serde = ["dep:serde"]
 fake = ["dep:fake"]
 sqlx = ["dep:sqlx"]
+sqlx-any = ["sqlx", "sqlx/any"]
 sqlx-mysql = ["sqlx", "sqlx/mysql"]
 sqlx-sqlite = ["sqlx", "sqlx/sqlite"]
 
@@ -20,6 +21,6 @@ fake  = { version = "2", features = ["derive"], optional = true }
 sqlx  = { version = "0", default-features = false, features = [], optional = true }
 
 [dev-dependencies]
-sqlx  = { version = "0", features = ["runtime-tokio"] }
+sqlx  = { version = "0", features = ["runtime-tokio", "macros", "sqlite"] }
 tokio  = { version = "1", features = ["macros", "rt"] }
 serde_json = { version = "1" }
