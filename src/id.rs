@@ -25,6 +25,8 @@ use sqlx::sqlite::SqliteTypeInfo;
 use sqlx::Any;
 #[cfg(feature = "sqlx-mysql")]
 use sqlx::MySql;
+#[cfg(feature = "sqlx-postgres")]
+use sqlx::Postgres;
 #[cfg(feature = "sqlx-sqlite")]
 use sqlx::Sqlite;
 #[cfg(feature = "sqlx")]
@@ -131,6 +133,17 @@ impl<T, U: sqlx::Type<sqlx::MySql>> Type<MySql> for Id<T, U> {
     }
 }
 
+#[cfg(feature = "sqlx-postgres")]
+impl<T, U: sqlx::Type<sqlx::Postgres>> Type<Postgres> for Id<T, U> {
+    fn type_info() -> <Postgres as sqlx::Database>::TypeInfo {
+        <U as Type<Postgres>>::type_info()
+    }
+
+    fn compatible(ty: &<Postgres as sqlx::Database>::TypeInfo) -> bool {
+        <U as Type<Postgres>>::compatible(ty)
+    }
+}
+
 #[cfg(feature = "sqlx-sqlite")]
 impl<T, U: sqlx::Type<sqlx::Sqlite>> Type<Sqlite> for Id<T, U> {
     fn type_info() -> SqliteTypeInfo {
@@ -155,6 +168,14 @@ impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::MySql>> Encode<'_, MySql> for 
         <U as Encode<MySql>>::encode(self.inner().clone(), buf)
     }
 }
+
+#[cfg(feature = "sqlx-postgres")]
+impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::Postgres>> Encode<'_, Postgres> for Id<T, U> {
+    fn encode_by_ref(&self, buf: &mut <Postgres as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
+        <U as Encode<Postgres>>::encode(self.inner().clone(), buf)
+    }
+}
+
 #[cfg(feature = "sqlx-sqlite")]
 impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::Sqlite>> Encode<'_, Sqlite> for Id<T, U> {
     fn encode_by_ref(&self, buf: &mut <Sqlite as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
@@ -174,6 +195,14 @@ impl<T, U: for<'a> sqlx::Decode<'a, sqlx::Any>> Decode<'_, Any> for Id<T, U> {
 impl<T, U: for<'a> sqlx::Decode<'a, sqlx::MySql>> Decode<'_, MySql> for Id<T, U> {
     fn decode(value: <MySql as HasValueRef<'_>>::ValueRef) -> Result<Self, BoxDynError> {
         let val = <U as Decode<MySql>>::decode(value)?;
+        Ok(Self::new(val))
+    }
+}
+
+#[cfg(feature = "sqlx-postgres")]
+impl<T, U: for<'a> sqlx::Decode<'a, sqlx::Postgres>> Decode<'_, Postgres> for Id<T, U> {
+    fn decode(value: <Postgres as HasValueRef<'_>>::ValueRef) -> Result<Self, BoxDynError> {
+        let val = <U as Decode<Postgres>>::decode(value)?;
         Ok(Self::new(val))
     }
 }
