@@ -53,12 +53,12 @@ assert_eq!(UserId::new(1), user_id);
 
 ## serde support
 
-You can serialize as original value if you use [serde] crate and feature = "serde" enabled.
+You can serialize and deserialize as original value if you use [serde] crate and feature = "serde" enabled.
 
 ```rust,ignore
 use kubetsu::Id;
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct User {
   id: Id<Self, i64>
 }
@@ -67,6 +67,9 @@ fn main() {
     let user = User { id: Id::new(1) };
     let str = serde_json::to_string(&user).unwrap();
     assert_eq!("{\"id\":1}", str);
+
+    // you can deserialize
+    let _: User = serde_json::from_str(&str).unwrap();
 }
 ```
 
