@@ -9,6 +9,11 @@ readme = "README.md"
 
 license-file = "LISENCE"
 
+description = "distinguish value type of other struct"
+
+homepage = "https://github.com/walf443/kubetsu"
+repository = "https://github.com/walf443/kubetsu.git"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
