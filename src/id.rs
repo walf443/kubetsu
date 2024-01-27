@@ -62,6 +62,7 @@ impl<T, U: PartialEq> PartialEq for Id<T, U> {
     }
 }
 
+/// you can use `Id` as hash key if value implement [Hash].
 impl<T, U: PartialEq + Hash> Hash for Id<T, U> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.inner.hash(state)
@@ -76,7 +77,7 @@ impl<T, U> From<U> for Id<T, U> {
     }
 }
 
-/// you can clone if value implement Clone.
+/// you can clone if value implement [Clone].
 impl<T, U: Clone> Clone for Id<T, U> {
     fn clone(&self) -> Self {
         Self::new(self.inner().clone())

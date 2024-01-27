@@ -114,14 +114,16 @@ fn main() {
 
 # Install
 
-## Cargo Feature Flags
+```bash
+$ cargo add kubetsu
+```
 
 # License
 
 MIT license (LICENSE-MIT or http://opensource.org/licenses/MIT)
 see [LICENSE](LICENSE)
 
-```
+```ignore
 Copyright (c) 2024 Keiji Yoshimi
 ```
 
