@@ -68,6 +68,25 @@ mod serde {
 
         assert_eq!(got, "1.0");
     }
+
+    #[test]
+    fn test_deserialize_f32() {
+        let id1: Id<Foo, f32> = serde_json::from_str("1.0").unwrap();
+
+        assert_eq!(id1.inner, 1.0);
+    }
+    #[test]
+    fn test_deserialize_f64() {
+        let id1: Id<Foo, f64> = serde_json::from_str("1.0").unwrap();
+
+        assert_eq!(id1.inner, 1.0);
+    }
+
+    #[test]
+    #[should_panic(expected = "expected f64")]
+    fn test_deserialize_with_error() {
+        let _: Id<Foo, f64> = serde_json::from_str("\"not i64 text\"").unwrap();
+    }
 }
 
 #[cfg(feature = "fake")]

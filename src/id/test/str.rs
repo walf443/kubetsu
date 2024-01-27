@@ -46,6 +46,13 @@ mod serde {
         let got = serde_json::to_string(&id1).unwrap();
         assert_eq!(got, "\"1\"")
     }
+
+    #[test]
+    fn test_deserialize() {
+        let id1: Id<Foo, String> = serde_json::from_str("\"kubetsu\"").unwrap();
+
+        assert_eq!(id1.inner(), "kubetsu");
+    }
 }
 
 #[cfg(feature = "fake")]
