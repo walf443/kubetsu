@@ -1,13 +1,13 @@
 [package]
 name = "kubetsu"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 authors = ["Keiji Yoshimi"]
 
 readme = "README.md"
 
-license-file = "LISENCE"
+license = "MIT"
 
 description = "distinguish value type of other struct"
 
