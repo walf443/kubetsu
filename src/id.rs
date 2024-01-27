@@ -156,30 +156,30 @@ impl<T, U: sqlx::Type<sqlx::Sqlite>> Type<Sqlite> for Id<T, U> {
 }
 
 #[cfg(feature = "sqlx-any")]
-impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::Any>> Encode<'_, Any> for Id<T, U> {
+impl<T, U: for<'a> sqlx::Encode<'a, sqlx::Any>> Encode<'_, Any> for Id<T, U> {
     fn encode_by_ref(&self, buf: &mut <Any as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
-        <U as Encode<Any>>::encode(self.inner().clone(), buf)
+        <U as Encode<Any>>::encode_by_ref(self.inner(), buf)
     }
 }
 
 #[cfg(feature = "sqlx-mysql")]
-impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::MySql>> Encode<'_, MySql> for Id<T, U> {
+impl<T, U: for<'a> sqlx::Encode<'a, sqlx::MySql>> Encode<'_, MySql> for Id<T, U> {
     fn encode_by_ref(&self, buf: &mut <MySql as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
-        <U as Encode<MySql>>::encode(self.inner().clone(), buf)
+        <U as Encode<MySql>>::encode_by_ref(self.inner(), buf)
     }
 }
 
 #[cfg(feature = "sqlx-postgres")]
-impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::Postgres>> Encode<'_, Postgres> for Id<T, U> {
+impl<T, U: for<'a> sqlx::Encode<'a, sqlx::Postgres>> Encode<'_, Postgres> for Id<T, U> {
     fn encode_by_ref(&self, buf: &mut <Postgres as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
-        <U as Encode<Postgres>>::encode(self.inner().clone(), buf)
+        <U as Encode<Postgres>>::encode_by_ref(self.inner(), buf)
     }
 }
 
 #[cfg(feature = "sqlx-sqlite")]
-impl<T, U: Clone + for<'a> sqlx::Encode<'a, sqlx::Sqlite>> Encode<'_, Sqlite> for Id<T, U> {
+impl<T, U: for<'a> sqlx::Encode<'a, sqlx::Sqlite>> Encode<'_, Sqlite> for Id<T, U> {
     fn encode_by_ref(&self, buf: &mut <Sqlite as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
-        <U as Encode<Sqlite>>::encode(self.inner().clone(), buf)
+        <U as Encode<Sqlite>>::encode_by_ref(self.inner(), buf)
     }
 }
 
