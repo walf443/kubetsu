@@ -18,12 +18,13 @@ repository = "https://github.com/walf443/kubetsu.git"
 
 [features]
 default  = []
-all = ["serde", "fake", "sqlx-mysql", "sqlx-sqlite", "sqlx-any"]
+all = ["serde", "fake", "sqlx-mysql", "sqlx-sqlite", "sqlx-postgres", "sqlx-any"]
 serde = ["dep:serde"]
 fake = ["dep:fake"]
 sqlx = ["dep:sqlx"]
 sqlx-any = ["sqlx", "sqlx/any"]
 sqlx-mysql = ["sqlx", "sqlx/mysql"]
+sqlx-postgres = ["sqlx", "sqlx/postgres"]
 sqlx-sqlite = ["sqlx", "sqlx/sqlite"]
 
 [dependencies]
