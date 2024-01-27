@@ -10,16 +10,16 @@ This is a library that distinguish struct value type as other type value.
 use kubetsu::Id;
 
 struct User {
-  id: Id<Self, i64>
+  id: Id<Self, i32>
 }
 
-type UserId = Id<User, i64>;
+type UserId = Id<User, i32>;
 
 struct Item {
-  id: Id<Self, i64>
+  id: Id<Self, i32>
 }
 
-type ItemId = Id<Item, i64>;
+type ItemId = Id<Item, i32>;
 
 fn main() {
   let user_id = UserId::new(1);
@@ -31,7 +31,7 @@ fn main() {
   //     --> src/lib.rs:29:3
   //     |
   //     21 |   assert_ne!(user_id, item_id); // compile error
-  // |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Id<User, i64>`, found `Id<Item, i64>`
+  // |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Id<User, i32>`, found `Id<Item, i32>`
   //     |
   //     = note: expected struct `Id<User, _>`
   //     found struct `Id<Item, _>`
@@ -42,7 +42,7 @@ fn main() {
 
 ```rust
 struct User {}
-type UserId = kubetsu::Id<User, i64>;
+type UserId = kubetsu::Id<User, i32>;
 
 let user_id = UserId::new(1);
 // you can access original value reference with `inner()`.
@@ -60,7 +60,7 @@ use kubetsu::Id;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct User {
-  id: Id<Self, i64>
+  id: Id<Self, i32>
 }
 
 fn main() {
@@ -81,7 +81,7 @@ You can select "sqlx-xxxx" feature for each driver. ("sqlx-any", "sqlx-mysql", "
 ```rust,no_run,ignore
 #[derive(sqlx::FromRow)]
 struct User {
-  id: kubetsu::Id<Self, i64>
+  id: kubetsu::Id<Self, i32>
 }
 
 async fn do_something_with_sqlx(conn: sqlx::AnyPool) -> Result<(), sqlx::Error> {
@@ -106,7 +106,7 @@ use fake::{Faker, Fake, Dummy};
 
 #[derive(Dummy)]
 struct User {
-  id: Id<Self, i64>
+  id: Id<Self, i32>
 }
 
 fn main() {
