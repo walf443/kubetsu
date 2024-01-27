@@ -190,6 +190,25 @@ mod serde {
         let got = serde_json::to_string(&id1).unwrap();
         assert_eq!("1".to_string(), got);
     }
+
+    #[test]
+    fn test_deserialize_i64() {
+        let id1: Id<Foo, i64> = serde_json::from_str("1").unwrap();
+
+        assert_eq!(id1.inner, 1);
+    }
+
+    #[test]
+    fn test_deserialize_u64() {
+        let id1: Id<Foo, u64> = serde_json::from_str("1").unwrap();
+
+        assert_eq!(id1.inner, 1);
+    }
+    #[test]
+    #[should_panic(expected = "expected i64")]
+    fn test_deserialize_with_error() {
+        let _: Id<Foo, i64> = serde_json::from_str("\"not i64 text\"").unwrap();
+    }
 }
 
 #[cfg(feature = "fake")]

@@ -8,7 +8,7 @@ mod test;
 #[cfg(feature = "fake")]
 use fake::{Dummy, Fake, Faker, Rng};
 #[cfg(feature = "serde")]
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 #[cfg(feature = "sqlx-any")]
 use sqlx::any::AnyTypeInfo;
 #[cfg(feature = "sqlx")]
@@ -84,143 +84,29 @@ impl<T, U: Clone> Clone for Id<T, U> {
     }
 }
 
-/// you can serialize same as i128 by serde if feature = "serde" enabled
+/// you can serialize if feature serde enabled and U implement [Serialize].
 #[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, i128> {
+impl<T, U: Serialize> Serialize for Id<T, U> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        serializer.serialize_i128(self.inner().clone())
+        U::serialize(self.inner(), serializer)
     }
 }
 
-/// you can serialize same as u128 by serde if feature = "serde" enabled
+/// you can deserialize if feature serde enabled and U implement [Deserialize].
 #[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, u128> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+impl<'de, T, U: Deserialize<'de>> Deserialize<'de> for Id<T, U> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        S: Serializer,
+        D: Deserializer<'de>,
     {
-        serializer.serialize_u128(self.inner().clone())
-    }
-}
-
-/// you can serialize same as i64 by serde if feature = "serde" enabled
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, i64> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_i64(self.inner().clone())
-    }
-}
-
-/// you can serialize same as u64 by serde if feature = "serde" enabled
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, u64> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_u64(self.inner().clone())
-    }
-}
-
-/// you can serialize same as i32 by serde if feature = "serde" enabled
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, i32> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_i32(self.inner().clone())
-    }
-}
-
-/// you can serialize same as u32 by serde if feature = "serde" enabled
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, u32> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_u32(self.inner().clone())
-    }
-}
-
-/// you can serialize same as i16 by serde if feature = "serde" enabled
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, i16> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_i16(self.inner().clone())
-    }
-}
-
-/// you can serialize same as u16 by serde if feature = "serde" enabled
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, u16> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_u16(self.inner().clone())
-    }
-}
-
-/// you can serialize same as i8 by serde if feature = "serde" enabled
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, i8> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_i8(self.inner().clone())
-    }
-}
-
-/// you can serialize same as u8 by serde if feature = "serde" enabled
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, u8> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_u8(self.inner().clone())
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, f64> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_f64(self.inner().clone())
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, f32> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_f32(self.inner().clone())
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<T> Serialize for Id<T, String> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.inner())
+        let result = U::deserialize(deserializer);
+        match result {
+            Ok(inner) => Ok(Self::new(inner)),
+            Err(e) => Err(e),
+        }
     }
 }
 
