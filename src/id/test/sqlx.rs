@@ -9,4 +9,3 @@ mod sqlite;
 
 #[cfg(feature = "sqlx-any")]
 mod any;
-
