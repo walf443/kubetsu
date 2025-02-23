@@ -12,8 +12,6 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 #[cfg(feature = "sqlx-any")]
 use sqlx::any::AnyTypeInfo;
 #[cfg(feature = "sqlx")]
-use sqlx::database::{HasArguments, HasValueRef};
-#[cfg(feature = "sqlx")]
 use sqlx::encode::IsNull;
 #[cfg(feature = "sqlx")]
 use sqlx::error::BoxDynError;
@@ -23,6 +21,8 @@ use sqlx::mysql::MySqlTypeInfo;
 use sqlx::sqlite::SqliteTypeInfo;
 #[cfg(feature = "sqlx-any")]
 use sqlx::Any;
+#[cfg(feature = "sqlx")]
+use sqlx::Database;
 #[cfg(feature = "sqlx-mysql")]
 use sqlx::MySql;
 #[cfg(feature = "sqlx-postgres")]
@@ -157,35 +157,47 @@ impl<T, U: sqlx::Type<sqlx::Sqlite>> Type<Sqlite> for Id<T, U> {
 
 #[cfg(feature = "sqlx-any")]
 impl<T, U: for<'a> sqlx::Encode<'a, sqlx::Any>> Encode<'_, Any> for Id<T, U> {
-    fn encode_by_ref(&self, buf: &mut <Any as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Any as Database>::ArgumentBuffer<'_>,
+    ) -> Result<IsNull, BoxDynError> {
         <U as Encode<Any>>::encode_by_ref(self.inner(), buf)
     }
 }
 
 #[cfg(feature = "sqlx-mysql")]
 impl<T, U: for<'a> sqlx::Encode<'a, sqlx::MySql>> Encode<'_, MySql> for Id<T, U> {
-    fn encode_by_ref(&self, buf: &mut <MySql as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <MySql as Database>::ArgumentBuffer<'_>,
+    ) -> Result<IsNull, BoxDynError> {
         <U as Encode<MySql>>::encode_by_ref(self.inner(), buf)
     }
 }
 
 #[cfg(feature = "sqlx-postgres")]
 impl<T, U: for<'a> sqlx::Encode<'a, sqlx::Postgres>> Encode<'_, Postgres> for Id<T, U> {
-    fn encode_by_ref(&self, buf: &mut <Postgres as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Postgres as Database>::ArgumentBuffer<'_>,
+    ) -> Result<IsNull, BoxDynError> {
         <U as Encode<Postgres>>::encode_by_ref(self.inner(), buf)
     }
 }
 
 #[cfg(feature = "sqlx-sqlite")]
 impl<T, U: for<'a> sqlx::Encode<'a, sqlx::Sqlite>> Encode<'_, Sqlite> for Id<T, U> {
-    fn encode_by_ref(&self, buf: &mut <Sqlite as HasArguments<'_>>::ArgumentBuffer) -> IsNull {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Sqlite as Database>::ArgumentBuffer<'_>,
+    ) -> Result<IsNull, BoxDynError> {
         <U as Encode<Sqlite>>::encode_by_ref(self.inner(), buf)
     }
 }
 
 #[cfg(feature = "sqlx-any")]
 impl<T, U: for<'a> sqlx::Decode<'a, sqlx::Any>> Decode<'_, Any> for Id<T, U> {
-    fn decode(value: <Any as HasValueRef<'_>>::ValueRef) -> Result<Self, BoxDynError> {
+    fn decode(value: <Any as Database>::ValueRef<'_>) -> Result<Self, BoxDynError> {
         let val = <U as Decode<Any>>::decode(value)?;
         Ok(Self::new(val))
     }
@@ -193,7 +205,7 @@ impl<T, U: for<'a> sqlx::Decode<'a, sqlx::Any>> Decode<'_, Any> for Id<T, U> {
 
 #[cfg(feature = "sqlx-mysql")]
 impl<T, U: for<'a> sqlx::Decode<'a, sqlx::MySql>> Decode<'_, MySql> for Id<T, U> {
-    fn decode(value: <MySql as HasValueRef<'_>>::ValueRef) -> Result<Self, BoxDynError> {
+    fn decode(value: <MySql as Database>::ValueRef<'_>) -> Result<Self, BoxDynError> {
         let val = <U as Decode<MySql>>::decode(value)?;
         Ok(Self::new(val))
     }
@@ -201,7 +213,7 @@ impl<T, U: for<'a> sqlx::Decode<'a, sqlx::MySql>> Decode<'_, MySql> for Id<T, U>
 
 #[cfg(feature = "sqlx-postgres")]
 impl<T, U: for<'a> sqlx::Decode<'a, sqlx::Postgres>> Decode<'_, Postgres> for Id<T, U> {
-    fn decode(value: <Postgres as HasValueRef<'_>>::ValueRef) -> Result<Self, BoxDynError> {
+    fn decode(value: <Postgres as Database>::ValueRef<'_>) -> Result<Self, BoxDynError> {
         let val = <U as Decode<Postgres>>::decode(value)?;
         Ok(Self::new(val))
     }
@@ -209,7 +221,7 @@ impl<T, U: for<'a> sqlx::Decode<'a, sqlx::Postgres>> Decode<'_, Postgres> for Id
 
 #[cfg(feature = "sqlx-sqlite")]
 impl<T, U: for<'a> sqlx::Decode<'a, sqlx::Sqlite>> Decode<'_, Sqlite> for Id<T, U> {
-    fn decode(value: <Sqlite as HasValueRef<'_>>::ValueRef) -> Result<Self, BoxDynError> {
+    fn decode(value: <Sqlite as Database>::ValueRef<'_>) -> Result<Self, BoxDynError> {
         let val = <U as Decode<Sqlite>>::decode(value)?;
         Ok(Self::new(val))
     }

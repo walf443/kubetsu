@@ -30,9 +30,9 @@ sqlx-sqlite = ["sqlx", "sqlx/sqlite"]
 [dependencies]
 serde = { version = "1", default-features = false, optional = true }
 fake  = { version = "2", features = ["derive"], optional = true }
-sqlx  = { version = "0", default-features = false, features = [], optional = true }
+sqlx  = { version = "0.8", default-features = false, features = [], optional = true }
 
 [dev-dependencies]
-sqlx  = { version = "0", features = ["runtime-tokio", "macros", "sqlite"] }
+sqlx  = { version = "0.8", features = ["runtime-tokio", "macros", "sqlite"] }
 tokio  = { version = "1", features = ["macros", "rt"] }
 serde_json = { version = "1" }
