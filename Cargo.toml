@@ -29,7 +29,7 @@ sqlx-sqlite = ["sqlx", "sqlx/sqlite"]
 
 [dependencies]
 serde = { version = "1", default-features = false, optional = true }
-fake  = { version = "2", features = ["derive"], optional = true }
+fake  = { version = "4", features = ["derive"], optional = true }
 sqlx  = { version = "0.8", default-features = false, features = [], optional = true }
 
 [dev-dependencies]

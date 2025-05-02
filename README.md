@@ -6,7 +6,7 @@ This is a library that distinguish struct value type as other type value.
 
 # Usage
 
-```rust,compile_fail
+```rust, compile_fail
 use kubetsu::Id;
 
 struct User {
