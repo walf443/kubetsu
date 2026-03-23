@@ -1,14 +1,43 @@
 use crate::Id;
+use ctor::dtor;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::{FromRow, PgPool};
+use std::sync::Mutex;
+use testcontainers::runners::AsyncRunner;
+use testcontainers::ContainerAsync;
+use testcontainers_modules::postgres::Postgres;
+use tokio::sync::OnceCell;
+
+static POSTGRES_CONTAINER: Mutex<Option<ContainerAsync<Postgres>>> = Mutex::new(None);
+static POSTGRES_POOL: OnceCell<PgPool> = OnceCell::const_new();
 
 async fn get_db_conn() -> Result<PgPool, sqlx::Error> {
-    let connect_info = PgConnectOptions::new();
-    let pool = PgPoolOptions::new()
-        .connect_with(connect_info)
-        .await
-        .unwrap();
-    Ok(pool)
+    let pool = POSTGRES_POOL
+        .get_or_init(|| async {
+            let container = Postgres::default().start().await.unwrap();
+            let host_port = container.get_host_port_ipv4(5432).await.unwrap();
+            let connect_info = PgConnectOptions::new()
+                .host("127.0.0.1")
+                .port(host_port)
+                .username("postgres")
+                .password("postgres");
+            let pool = PgPoolOptions::new()
+                .connect_with(connect_info)
+                .await
+                .unwrap();
+            *POSTGRES_CONTAINER.lock().unwrap() = Some(container);
+            pool
+        })
+        .await;
+    Ok(pool.clone())
+}
+
+#[dtor]
+fn cleanup_postgres() {
+    if let Some(container) = POSTGRES_CONTAINER.lock().ok().and_then(|mut g| g.take()) {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let _ = rt.block_on(container.rm());
+    }
 }
 
 #[derive(FromRow)]

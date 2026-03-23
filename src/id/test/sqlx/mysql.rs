@@ -1,14 +1,42 @@
 use crate::Id;
+use ctor::dtor;
 use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};
 use sqlx::{FromRow, MySqlPool};
+use std::sync::Mutex;
+use testcontainers::runners::AsyncRunner;
+use testcontainers::ContainerAsync;
+use testcontainers_modules::mysql::Mysql;
+use tokio::sync::OnceCell;
+
+static MYSQL_CONTAINER: Mutex<Option<ContainerAsync<Mysql>>> = Mutex::new(None);
+static MYSQL_POOL: OnceCell<MySqlPool> = OnceCell::const_new();
 
 async fn get_db_conn() -> Result<MySqlPool, sqlx::Error> {
-    let connect_info = MySqlConnectOptions::new();
-    let pool = MySqlPoolOptions::new()
-        .connect_with(connect_info)
-        .await
-        .unwrap();
-    Ok(pool)
+    let pool = MYSQL_POOL
+        .get_or_init(|| async {
+            let container = Mysql::default().start().await.unwrap();
+            let host_port = container.get_host_port_ipv4(3306).await.unwrap();
+            let connect_info = MySqlConnectOptions::new()
+                .host("127.0.0.1")
+                .port(host_port)
+                .username("root");
+            let pool = MySqlPoolOptions::new()
+                .connect_with(connect_info)
+                .await
+                .unwrap();
+            *MYSQL_CONTAINER.lock().unwrap() = Some(container);
+            pool
+        })
+        .await;
+    Ok(pool.clone())
+}
+
+#[dtor]
+fn cleanup_mysql() {
+    if let Some(container) = MYSQL_CONTAINER.lock().ok().and_then(|mut g| g.take()) {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let _ = rt.block_on(container.rm());
+    }
 }
 
 #[derive(FromRow)]
