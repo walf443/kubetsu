@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 mod test;
 
 #[cfg(feature = "fake")]
-use fake::{Dummy, Fake, Faker, Rng};
+use fake::{Dummy, Fake, Faker, RngExt};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 #[cfg(feature = "sqlx-any")]
@@ -229,7 +229,7 @@ impl<T, U: for<'a> sqlx::Decode<'a, sqlx::Sqlite>> Decode<'_, Sqlite> for Id<T, 
 
 #[cfg(feature = "fake")]
 impl<T, U: fake::Dummy<fake::Faker>> Dummy<Faker> for Id<T, U> {
-    fn dummy_with_rng<R: Rng + ?Sized>(config: &Faker, rng: &mut R) -> Self {
+    fn dummy_with_rng<R: RngExt + ?Sized>(config: &Faker, rng: &mut R) -> Self {
         let inner = Fake::fake_with_rng::<U, R>(config, rng);
         Self::new(inner)
     }
