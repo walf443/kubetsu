@@ -33,7 +33,7 @@ async fn get_db_conn() -> Result<MySqlPool, sqlx::Error> {
 
 #[dtor]
 fn cleanup_mysql() {
-    if let Some(container) = MYSQL_CONTAINER.lock().unwrap().take() {
+    if let Some(container) = MYSQL_CONTAINER.lock().ok().and_then(|mut g| g.take()) {
         let rt = tokio::runtime::Runtime::new().unwrap();
         let _ = rt.block_on(container.rm());
     }
