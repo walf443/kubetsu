@@ -3,21 +3,38 @@ mod test;
 
 /// Define a custom ID type with the same capabilities as `kubetsu::Id`.
 ///
-/// This macro generates a standalone struct that wraps an inner value type,
+/// This macro generates a struct that wraps an inner value type,
 /// along with trait implementations for common operations.
 ///
-/// # Example
+/// # Generic form
+///
+/// Generates a generic type with `PhantomData`, equivalent to `kubetsu::Id<T, U>`.
+/// The first type parameter is the phantom type tag, the second is the inner value type.
 ///
 /// ```rust
-/// kubetsu::define_id!(pub struct UserId(i64););
-/// kubetsu::define_id!(pub struct ItemId(String););
+/// kubetsu::define_id!(pub struct MyId<T, U>;);
+///
+/// struct User;
+/// struct Item;
+/// type UserId = MyId<User, i64>;
+/// type ItemId = MyId<Item, i64>;
 ///
 /// let user_id = UserId::new(42);
 /// assert_eq!(*user_id.inner(), 42);
-///
-/// let item_id: ItemId = "abc".to_string().into();
-/// assert_eq!(item_id.inner(), "abc");
 /// ```
+///
+/// # Concrete form
+///
+/// Generates a standalone type with a fixed inner type.
+///
+/// ```rust
+/// kubetsu::define_id!(pub struct UserId(i64););
+///
+/// let user_id = UserId::new(42);
+/// assert_eq!(*user_id.inner(), 42);
+/// ```
+///
+/// # Trait implementations
 ///
 /// The generated type always implements:
 /// - `new()` and `inner()` methods
@@ -30,6 +47,38 @@ mod test;
 /// - `fake::Dummy` (feature `fake`)
 #[macro_export]
 macro_rules! define_id {
+    // Generic form: define_id!(pub struct MyId<T, U>;);
+    ($(#[$meta:meta])* $vis:vis struct $name:ident<$phantom:ident, $inner:ident>;) => {
+        $(#[$meta])*
+        $vis struct $name<$phantom, $inner> {
+            inner: $inner,
+            _phantom: ::std::marker::PhantomData<$phantom>,
+        }
+
+        impl<$phantom, $inner> $name<$phantom, $inner> {
+            /// Create a new instance. You should use this method carefully because the value is not checked as valid.
+            pub fn new(inner: $inner) -> Self {
+                Self {
+                    inner,
+                    _phantom: ::std::marker::PhantomData,
+                }
+            }
+
+            /// Access the internal value reference. You should use this method carefully.
+            pub fn inner(&self) -> &$inner {
+                &self.inner
+            }
+        }
+
+        $crate::__impl_id_core_traits!([$phantom, $inner] $name<$phantom, $inner>, $inner);
+        $crate::__impl_id_serde!([$phantom, $inner] $name<$phantom, $inner>, $inner);
+        $crate::__impl_id_fake!([$phantom, $inner] $name<$phantom, $inner>, $inner);
+        $crate::__impl_id_sqlx_any!([$phantom, $inner] $name<$phantom, $inner>, $inner);
+        $crate::__impl_id_sqlx_mysql!([$phantom, $inner] $name<$phantom, $inner>, $inner);
+        $crate::__impl_id_sqlx_postgres!([$phantom, $inner] $name<$phantom, $inner>, $inner);
+        $crate::__impl_id_sqlx_sqlite!([$phantom, $inner] $name<$phantom, $inner>, $inner);
+    };
+    // Concrete form: define_id!(pub struct UserId(i64););
     ($(#[$meta:meta])* $vis:vis struct $name:ident($inner:ty);) => {
         $(#[$meta])*
         $vis struct $name {
