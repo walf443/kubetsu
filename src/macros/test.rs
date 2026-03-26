@@ -101,3 +101,51 @@ mod fake_tests {
         let _id: ItemId = Faker.fake();
     }
 }
+
+#[cfg(feature = "sqlx-sqlite")]
+mod sqlx_sqlite_tests {
+    use super::*;
+    use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+    use sqlx::{FromRow, SqlitePool};
+
+    async fn get_db_conn() -> Result<SqlitePool, sqlx::Error> {
+        let connect_info = SqliteConnectOptions::new();
+        let pool = SqlitePoolOptions::new()
+            .connect_with(connect_info)
+            .await
+            .unwrap();
+        Ok(pool)
+    }
+
+    #[derive(FromRow)]
+    struct Row {
+        id: UserId,
+    }
+
+    #[tokio::test]
+    async fn test_query_as() {
+        let conn = get_db_conn().await.unwrap();
+        let mut tx = conn.begin().await.unwrap();
+        let row: Row = sqlx::query_as("SELECT 1 as id")
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
+
+        assert_eq!(*row.id.inner(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_encode() {
+        let conn = get_db_conn().await.unwrap();
+        let id = UserId::new(1);
+
+        let mut tx = conn.begin().await.unwrap();
+        let got: i64 = sqlx::query_scalar("SELECT 1 WHERE 1 = ?")
+            .bind(&id)
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
+
+        assert_eq!(got, 1);
+    }
+}

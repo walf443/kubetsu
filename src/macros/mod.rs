@@ -59,8 +59,13 @@ macro_rules! define_id {
 }
 
 // =============================================================================
-// Core traits: Debug, PartialEq, Eq, Hash, Clone, From
+// Internal macros for trait implementations.
+// These are exported because macro_rules! requires #[macro_export] for
+// cross-crate usage, but they are not part of the public API and may change
+// without notice.
 // =============================================================================
+
+// Core traits: Debug, PartialEq, Eq, Hash, Clone, From
 
 #[doc(hidden)]
 #[macro_export]
@@ -209,7 +214,8 @@ macro_rules! __impl_id_serde {
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __impl_id_serde {
-    ([$($gen:tt)*] $name:ty, $inner:ty) => {};
+    ([] $name:ty, $inner:ty) => {};
+    ([$($gen:tt)+] $name:ty, $inner:ty) => {};
 }
 
 // =============================================================================
@@ -255,7 +261,8 @@ macro_rules! __impl_id_fake {
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __impl_id_fake {
-    ([$($gen:tt)*] $name:ty, $inner:ty) => {};
+    ([] $name:ty, $inner:ty) => {};
+    ([$($gen:tt)+] $name:ty, $inner:ty) => {};
 }
 
 // =============================================================================
@@ -351,7 +358,8 @@ macro_rules! __impl_id_sqlx_any {
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __impl_id_sqlx_any {
-    ([$($gen:tt)*] $name:ty, $inner:ty) => {};
+    ([] $name:ty, $inner:ty) => {};
+    ([$($gen:tt)+] $name:ty, $inner:ty) => {};
 }
 
 // =============================================================================
@@ -447,7 +455,8 @@ macro_rules! __impl_id_sqlx_mysql {
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __impl_id_sqlx_mysql {
-    ([$($gen:tt)*] $name:ty, $inner:ty) => {};
+    ([] $name:ty, $inner:ty) => {};
+    ([$($gen:tt)+] $name:ty, $inner:ty) => {};
 }
 
 // =============================================================================
@@ -547,7 +556,8 @@ macro_rules! __impl_id_sqlx_postgres {
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __impl_id_sqlx_postgres {
-    ([$($gen:tt)*] $name:ty, $inner:ty) => {};
+    ([] $name:ty, $inner:ty) => {};
+    ([$($gen:tt)+] $name:ty, $inner:ty) => {};
 }
 
 // =============================================================================
@@ -643,5 +653,6 @@ macro_rules! __impl_id_sqlx_sqlite {
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __impl_id_sqlx_sqlite {
-    ([$($gen:tt)*] $name:ty, $inner:ty) => {};
+    ([] $name:ty, $inner:ty) => {};
+    ([$($gen:tt)+] $name:ty, $inner:ty) => {};
 }
