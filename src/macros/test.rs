@@ -149,6 +149,19 @@ mod serde_tests {
         let id: ItemId = serde_json::from_str("\"abc\"").unwrap();
         assert_eq!(id.inner(), "abc");
     }
+
+    #[test]
+    fn test_generic_serialize() {
+        let id = MyUserId::new(42);
+        let json = serde_json::to_string(&id).unwrap();
+        assert_eq!(json, "42");
+    }
+
+    #[test]
+    fn test_generic_deserialize() {
+        let id: MyUserId = serde_json::from_str("42").unwrap();
+        assert_eq!(*id.inner(), 42);
+    }
 }
 
 #[cfg(feature = "fake")]
@@ -164,6 +177,11 @@ mod fake_tests {
     #[test]
     fn test_fake_string() {
         let _id: ItemId = Faker.fake();
+    }
+
+    #[test]
+    fn test_generic_fake() {
+        let _id: MyUserId = Faker.fake();
     }
 }
 
@@ -203,6 +221,38 @@ mod sqlx_sqlite_tests {
     async fn test_encode() {
         let conn = get_db_conn().await.unwrap();
         let id = UserId::new(1);
+
+        let mut tx = conn.begin().await.unwrap();
+        let got: i64 = sqlx::query_scalar("SELECT 1 WHERE 1 = ?")
+            .bind(&id)
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
+
+        assert_eq!(got, 1);
+    }
+
+    #[derive(FromRow)]
+    struct GenericRow {
+        id: MyUserId,
+    }
+
+    #[tokio::test]
+    async fn test_generic_query_as() {
+        let conn = get_db_conn().await.unwrap();
+        let mut tx = conn.begin().await.unwrap();
+        let row: GenericRow = sqlx::query_as("SELECT 1 as id")
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
+
+        assert_eq!(*row.id.inner(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_generic_encode() {
+        let conn = get_db_conn().await.unwrap();
+        let id = MyUserId::new(1);
 
         let mut tx = conn.begin().await.unwrap();
         let got: i64 = sqlx::query_scalar("SELECT 1 WHERE 1 = ?")
