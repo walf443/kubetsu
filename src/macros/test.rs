@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 
-crate::define_id!(pub struct UserId(i64););
-crate::define_id!(pub struct ItemId(String););
+crate::define_id!(
+    pub struct UserId(i64);
+);
+crate::define_id!(
+    pub struct ItemId(String);
+);
 
 #[test]
 fn test_new_and_inner() {
