@@ -38,4 +38,4 @@ tokio  = { version = "1", features = ["macros", "rt"] }
 serde_json = { version = "1" }
 testcontainers = { version = "0.27" }
 testcontainers-modules = { version = "0.15", features = ["postgres", "mysql"] }
-ctor = { version = "0.6" }
+ctor = { version = "0.7" }
