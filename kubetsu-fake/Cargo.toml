@@ -17,4 +17,3 @@ kubetsu = { version = "0.7", path = "../kubetsu" }
 fake = { version = "5", features = ["derive"] }
 
 [dev-dependencies]
-kubetsu = { path = "../kubetsu" }

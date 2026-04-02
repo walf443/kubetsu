@@ -8,6 +8,9 @@ on:
       - "kubetsu-fake-v*"
       - "kubetsu-sqlx-v*"
 
+# NOTE: Adapter crates depend on `kubetsu` by version on crates.io.
+# On the first release, publish kubetsu (v* tag) before any adapter tags.
+
 jobs:
   publish:
     runs-on: ubuntu-latest

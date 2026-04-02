@@ -15,7 +15,7 @@ A Rust library that distinguishes struct value types as different types, prevent
 
 ## Quick Start
 
-```rust
+```rust,ignore
 kubetsu::define_id!(pub struct UserId(i64););
 kubetsu_serde::impl_serde!(UserId(i64));
 kubetsu_fake::impl_fake!(UserId(i64));

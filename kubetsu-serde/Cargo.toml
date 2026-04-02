@@ -17,5 +17,4 @@ kubetsu = { version = "0.7", path = "../kubetsu" }
 serde = { version = "1", default-features = false }
 
 [dev-dependencies]
-kubetsu = { path = "../kubetsu" }
 serde_json = { version = "1" }
