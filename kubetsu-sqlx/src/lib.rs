@@ -526,4 +526,207 @@ mod tests {
             assert_eq!(got, 1);
         }
     }
+
+    #[cfg(feature = "mysql")]
+    mod mysql_tests {
+        use super::*;
+        use ctor::dtor;
+        use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};
+        use sqlx::{FromRow, MySqlPool};
+        use std::sync::Mutex;
+        use testcontainers::runners::AsyncRunner;
+        use testcontainers::ContainerAsync;
+        use testcontainers_modules::mysql::Mysql;
+        use tokio::sync::OnceCell;
+
+        static MYSQL_CONTAINER: Mutex<Option<ContainerAsync<Mysql>>> = Mutex::new(None);
+        static MYSQL_POOL: OnceCell<MySqlPool> = OnceCell::const_new();
+
+        async fn get_db_conn() -> Result<MySqlPool, sqlx::Error> {
+            let pool = MYSQL_POOL
+                .get_or_init(|| async {
+                    let container = Mysql::default().start().await.unwrap();
+                    let host_port = container.get_host_port_ipv4(3306).await.unwrap();
+                    let connect_info = MySqlConnectOptions::new()
+                        .host("127.0.0.1")
+                        .port(host_port)
+                        .username("root");
+                    let pool = MySqlPoolOptions::new()
+                        .connect_with(connect_info)
+                        .await
+                        .unwrap();
+                    *MYSQL_CONTAINER.lock().unwrap() = Some(container);
+                    pool
+                })
+                .await;
+            Ok(pool.clone())
+        }
+
+        #[dtor]
+        fn cleanup_mysql() {
+            if let Some(container) = MYSQL_CONTAINER.lock().ok().and_then(|mut g| g.take()) {
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                let _ = rt.block_on(container.rm());
+            }
+        }
+
+        #[derive(FromRow)]
+        struct Row {
+            id: UserId,
+        }
+
+        #[tokio::test]
+        async fn test_query_as() {
+            let conn = get_db_conn().await.unwrap();
+            let mut tx = conn.begin().await.unwrap();
+            let row: Row = sqlx::query_as("SELECT 1 as id")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(*row.id.inner(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_encode() {
+            let conn = get_db_conn().await.unwrap();
+            let id = UserId::new(1);
+
+            let mut tx = conn.begin().await.unwrap();
+            let got: i64 = sqlx::query_scalar("SELECT 1 WHERE 1 = ?")
+                .bind(&id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(got, 1);
+        }
+    }
+
+    #[cfg(feature = "postgres")]
+    mod postgres_tests {
+        use super::*;
+        use ctor::dtor;
+        use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+        use sqlx::{FromRow, PgPool};
+        use std::sync::Mutex;
+        use testcontainers::runners::AsyncRunner;
+        use testcontainers::ContainerAsync;
+        use testcontainers_modules::postgres::Postgres;
+        use tokio::sync::OnceCell;
+
+        static POSTGRES_CONTAINER: Mutex<Option<ContainerAsync<Postgres>>> = Mutex::new(None);
+        static POSTGRES_POOL: OnceCell<PgPool> = OnceCell::const_new();
+
+        async fn get_db_conn() -> Result<PgPool, sqlx::Error> {
+            let pool = POSTGRES_POOL
+                .get_or_init(|| async {
+                    let container = Postgres::default().start().await.unwrap();
+                    let host_port = container.get_host_port_ipv4(5432).await.unwrap();
+                    let connect_info = PgConnectOptions::new()
+                        .host("127.0.0.1")
+                        .port(host_port)
+                        .username("postgres")
+                        .password("postgres");
+                    let pool = PgPoolOptions::new()
+                        .connect_with(connect_info)
+                        .await
+                        .unwrap();
+                    *POSTGRES_CONTAINER.lock().unwrap() = Some(container);
+                    pool
+                })
+                .await;
+            Ok(pool.clone())
+        }
+
+        #[dtor]
+        fn cleanup_postgres() {
+            if let Some(container) = POSTGRES_CONTAINER.lock().ok().and_then(|mut g| g.take()) {
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                let _ = rt.block_on(container.rm());
+            }
+        }
+
+        #[derive(FromRow)]
+        struct Row {
+            id: UserId,
+        }
+
+        #[tokio::test]
+        async fn test_query_as() {
+            let conn = get_db_conn().await.unwrap();
+            let mut tx = conn.begin().await.unwrap();
+            let row: Row = sqlx::query_as("SELECT 1::bigint as id")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(*row.id.inner(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_encode() {
+            let conn = get_db_conn().await.unwrap();
+            let id = UserId::new(1);
+
+            let mut tx = conn.begin().await.unwrap();
+            let got: i64 = sqlx::query_scalar("SELECT $1::bigint")
+                .bind(&id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(got, 1);
+        }
+    }
+
+    #[cfg(feature = "any")]
+    mod any_tests {
+        use super::*;
+        use sqlx::any::{install_default_drivers, AnyConnectOptions, AnyPoolOptions};
+        use sqlx::{AnyPool, FromRow};
+        use std::str::FromStr;
+
+        async fn get_db_conn() -> Result<AnyPool, sqlx::Error> {
+            install_default_drivers();
+            let connect_info = AnyConnectOptions::from_str("sqlite:").unwrap();
+            let pool = AnyPoolOptions::new()
+                .connect_with(connect_info)
+                .await
+                .unwrap();
+            Ok(pool)
+        }
+
+        #[derive(FromRow)]
+        struct Row {
+            id: UserId,
+        }
+
+        #[tokio::test]
+        async fn test_query_as() {
+            let conn = get_db_conn().await.unwrap();
+            let mut tx = conn.begin().await.unwrap();
+            let row: Row = sqlx::query_as("SELECT 1 as id")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(*row.id.inner(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_encode() {
+            let conn = get_db_conn().await.unwrap();
+            let id = UserId::new(1);
+
+            let mut tx = conn.begin().await.unwrap();
+            let got: i64 = sqlx::query_scalar("SELECT 1 WHERE 1 = ?")
+                .bind(&id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(got, 1);
+        }
+    }
 }
