@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - "v*"
+      - "kubetsu-serde-v*"
+      - "kubetsu-fake-v*"
+      - "kubetsu-sqlx-v*"
 
 jobs:
   publish:
@@ -23,7 +26,26 @@ jobs:
         id: auth
 
       - name: Publish kubetsu to crates.io
+        if: startsWith(github.ref_name, 'v')
         run: cargo publish -p kubetsu
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Publish kubetsu-serde to crates.io
+        if: startsWith(github.ref_name, 'kubetsu-serde-v')
+        run: cargo publish -p kubetsu-serde
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Publish kubetsu-fake to crates.io
+        if: startsWith(github.ref_name, 'kubetsu-fake-v')
+        run: cargo publish -p kubetsu-fake
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Publish kubetsu-sqlx to crates.io
+        if: startsWith(github.ref_name, 'kubetsu-sqlx-v')
+        run: cargo publish -p kubetsu-sqlx
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
