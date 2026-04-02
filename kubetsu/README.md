@@ -52,10 +52,11 @@ assert_eq!(&1, user_id.inner());
 
 ## serde support
 
-You can serialize and deserialize as original value if you use [serde] crate and feature = "serde" enabled.
+Use the [kubetsu-serde](https://crates.io/crates/kubetsu-serde) crate to serialize and deserialize as the inner value.
 
 ```rust,ignore
 kubetsu::define_id!(pub struct Id<T, U>;);
+kubetsu_serde::impl_serde!(Id<T, U>);
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct User {
@@ -74,11 +75,11 @@ fn main() {
 
 ## sqlx support
 
-You can encode and decode ID values if you use [sqlx](https://crates.io/crates/sqlx) crate and feature = "sqlx" enabled.
-You can select "sqlx-xxxx" feature for each driver. ("sqlx-any", "sqlx-mysql", "sqlx-postgres", "sqlx-sqlite")
+Use the [kubetsu-sqlx](https://crates.io/crates/kubetsu-sqlx) crate to encode and decode ID values with [sqlx](https://crates.io/crates/sqlx). Enable the feature for each driver you need (`any`, `mysql`, `postgres`, `sqlite`).
 
 ```rust,no_run,ignore
 kubetsu::define_id!(pub struct Id<T, U>;);
+kubetsu_sqlx::impl_sqlx!(Id<T, U>);
 
 #[derive(sqlx::FromRow)]
 struct User {
@@ -88,7 +89,6 @@ struct User {
 async fn do_something_with_sqlx(conn: sqlx::AnyPool) -> Result<(), sqlx::Error> {
     let mut tx = conn.begin().await?;
     let user: User = sqlx::query_as("SELECT 1 as `id`").fetch_one(&mut *tx).await?;
-    // do something with user
 
     // you can also pass to bind
     let user2: User = sqlx::query_as("SELECT 1 as `id` WHERE 1 = ?").bind(&user.id).fetch_one(&mut *tx).await?;
@@ -99,10 +99,11 @@ async fn do_something_with_sqlx(conn: sqlx::AnyPool) -> Result<(), sqlx::Error> 
 
 ## fake support
 
-You can use `Faker.fake()` if you use [fake](https://crates.io/crates/fake) crate and feature = "fake" enabled.
+Use the [kubetsu-fake](https://crates.io/crates/kubetsu-fake) crate to generate dummy values with [fake](https://crates.io/crates/fake).
 
 ```rust,ignore
 kubetsu::define_id!(pub struct Id<T, U>;);
+kubetsu_fake::impl_fake!(Id<T, U>);
 
 use fake::{Faker, Fake, Dummy};
 
@@ -121,6 +122,9 @@ fn main() {
 
 ```bash
 $ cargo add kubetsu
+$ cargo add kubetsu-serde   # if you need serde support
+$ cargo add kubetsu-fake    # if you need fake support
+$ cargo add kubetsu-sqlx    # if you need sqlx support
 ```
 
 # License
