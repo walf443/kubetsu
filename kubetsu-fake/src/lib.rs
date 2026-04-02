@@ -33,7 +33,11 @@ macro_rules! impl_fake {
     // Concrete form: impl_fake!(UserId(i64));
     ($name:ident($inner:ty)) => {
         const _: () = {
-            fn _assert_kubetsu_id() where $name: $crate::__private::kubetsu::KubetsuId<Inner = $inner> {}
+            fn _assert_kubetsu_id()
+            where
+                $name: $crate::__private::kubetsu::KubetsuId<Inner = $inner>,
+            {
+            }
         };
 
         impl $crate::__private::fake::Dummy<$crate::__private::fake::Faker> for $name {
@@ -41,8 +45,7 @@ macro_rules! impl_fake {
                 config: &$crate::__private::fake::Faker,
                 rng: &mut R,
             ) -> Self {
-                let inner =
-                    $crate::__private::fake::Fake::fake_with_rng::<$inner, R>(config, rng);
+                let inner = $crate::__private::fake::Fake::fake_with_rng::<$inner, R>(config, rng);
                 Self::new(inner)
             }
         }
@@ -50,10 +53,15 @@ macro_rules! impl_fake {
     // Generic form: impl_fake!(MyId<T, U>);
     ($name:ident<$phantom:ident, $inner:ident>) => {
         const _: () = {
-            fn _assert_kubetsu_id<$phantom, $inner>() where $name<$phantom, $inner>: $crate::__private::kubetsu::KubetsuId<Inner = $inner> {}
+            fn _assert_kubetsu_id<$phantom, $inner>()
+            where
+                $name<$phantom, $inner>: $crate::__private::kubetsu::KubetsuId<Inner = $inner>,
+            {
+            }
         };
 
-        impl<$phantom, $inner> $crate::__private::fake::Dummy<$crate::__private::fake::Faker> for $name<$phantom, $inner>
+        impl<$phantom, $inner> $crate::__private::fake::Dummy<$crate::__private::fake::Faker>
+            for $name<$phantom, $inner>
         where
             $inner: $crate::__private::fake::Dummy<$crate::__private::fake::Faker>,
         {
@@ -61,8 +69,7 @@ macro_rules! impl_fake {
                 config: &$crate::__private::fake::Faker,
                 rng: &mut R,
             ) -> Self {
-                let inner =
-                    $crate::__private::fake::Fake::fake_with_rng::<$inner, R>(config, rng);
+                let inner = $crate::__private::fake::Fake::fake_with_rng::<$inner, R>(config, rng);
                 Self::new(inner)
             }
         }
@@ -73,12 +80,18 @@ macro_rules! impl_fake {
 mod tests {
     use fake::{Fake, Faker};
 
-    kubetsu::define_id!(pub struct UserId(i64););
-    kubetsu::define_id!(pub struct ItemId(String););
+    kubetsu::define_id!(
+        pub struct UserId(i64);
+    );
+    kubetsu::define_id!(
+        pub struct ItemId(String);
+    );
     crate::impl_fake!(UserId(i64));
     crate::impl_fake!(ItemId(String));
 
-    kubetsu::define_id!(pub struct MyId<T, U>;);
+    kubetsu::define_id!(
+        pub struct MyId<T, U>;
+    );
     crate::impl_fake!(MyId<T, U>);
 
     struct User;

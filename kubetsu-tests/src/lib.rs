@@ -4,19 +4,25 @@
 mod tests {
     // --- Concrete form ---
 
-    kubetsu::define_id!(pub struct UserId(i64););
+    kubetsu::define_id!(
+        pub struct UserId(i64);
+    );
     kubetsu_serde::impl_serde!(UserId(i64));
     kubetsu_fake::impl_fake!(UserId(i64));
     kubetsu_sqlx::impl_sqlx!(UserId(i64));
 
-    kubetsu::define_id!(pub struct ItemId(String););
+    kubetsu::define_id!(
+        pub struct ItemId(String);
+    );
     kubetsu_serde::impl_serde!(ItemId(String));
     kubetsu_fake::impl_fake!(ItemId(String));
     kubetsu_sqlx::impl_sqlx!(ItemId(String));
 
     // --- Generic form ---
 
-    kubetsu::define_id!(pub struct MyId<T, U>;);
+    kubetsu::define_id!(
+        pub struct MyId<T, U>;
+    );
     kubetsu_serde::impl_serde!(MyId<T, U>);
     kubetsu_fake::impl_fake!(MyId<T, U>);
     kubetsu_sqlx::impl_sqlx!(MyId<T, U>);

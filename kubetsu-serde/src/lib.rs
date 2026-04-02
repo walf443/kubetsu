@@ -35,7 +35,11 @@ macro_rules! impl_serde {
     // Concrete form: impl_serde!(UserId(i64));
     ($name:ident($inner:ty)) => {
         const _: () = {
-            fn _assert_kubetsu_id() where $name: $crate::__private::kubetsu::KubetsuId<Inner = $inner> {}
+            fn _assert_kubetsu_id()
+            where
+                $name: $crate::__private::kubetsu::KubetsuId<Inner = $inner>,
+            {
+            }
         };
 
         impl $crate::__private::serde::Serialize for $name {
@@ -43,10 +47,7 @@ macro_rules! impl_serde {
             where
                 S: $crate::__private::serde::Serializer,
             {
-                <$inner as $crate::__private::serde::Serialize>::serialize(
-                    self.inner(),
-                    serializer,
-                )
+                <$inner as $crate::__private::serde::Serialize>::serialize(self.inner(), serializer)
             }
         }
 
@@ -64,7 +65,11 @@ macro_rules! impl_serde {
     // Generic form: impl_serde!(MyId<T, U>);
     ($name:ident<$phantom:ident, $inner:ident>) => {
         const _: () = {
-            fn _assert_kubetsu_id<$phantom, $inner>() where $name<$phantom, $inner>: $crate::__private::kubetsu::KubetsuId<Inner = $inner> {}
+            fn _assert_kubetsu_id<$phantom, $inner>()
+            where
+                $name<$phantom, $inner>: $crate::__private::kubetsu::KubetsuId<Inner = $inner>,
+            {
+            }
         };
 
         impl<$phantom, $inner> $crate::__private::serde::Serialize for $name<$phantom, $inner>
@@ -75,14 +80,12 @@ macro_rules! impl_serde {
             where
                 S: $crate::__private::serde::Serializer,
             {
-                <$inner as $crate::__private::serde::Serialize>::serialize(
-                    self.inner(),
-                    serializer,
-                )
+                <$inner as $crate::__private::serde::Serialize>::serialize(self.inner(), serializer)
             }
         }
 
-        impl<'de, $phantom, $inner> $crate::__private::serde::Deserialize<'de> for $name<$phantom, $inner>
+        impl<'de, $phantom, $inner> $crate::__private::serde::Deserialize<'de>
+            for $name<$phantom, $inner>
         where
             $inner: $crate::__private::serde::Deserialize<'de>,
         {
@@ -100,12 +103,18 @@ macro_rules! impl_serde {
 
 #[cfg(test)]
 mod tests {
-    kubetsu::define_id!(pub struct UserId(i64););
-    kubetsu::define_id!(pub struct ItemId(String););
+    kubetsu::define_id!(
+        pub struct UserId(i64);
+    );
+    kubetsu::define_id!(
+        pub struct ItemId(String);
+    );
     crate::impl_serde!(UserId(i64));
     crate::impl_serde!(ItemId(String));
 
-    kubetsu::define_id!(pub struct MyId<T, U>;);
+    kubetsu::define_id!(
+        pub struct MyId<T, U>;
+    );
     crate::impl_serde!(MyId<T, U>);
 
     struct User;

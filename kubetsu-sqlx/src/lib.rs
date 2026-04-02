@@ -434,10 +434,14 @@ macro_rules! __impl_sqlx_sqlite {
 
 #[cfg(test)]
 mod tests {
-    kubetsu::define_id!(pub struct UserId(i64););
+    kubetsu::define_id!(
+        pub struct UserId(i64);
+    );
     crate::impl_sqlx!(UserId(i64));
 
-    kubetsu::define_id!(pub struct MyId<T, U>;);
+    kubetsu::define_id!(
+        pub struct MyId<T, U>;
+    );
     crate::impl_sqlx!(MyId<T, U>);
 
     #[cfg(feature = "sqlite")]
