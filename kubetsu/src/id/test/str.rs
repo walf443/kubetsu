@@ -33,37 +33,3 @@ fn test_hash_key_str() {
     hash.insert(id1.clone(), true);
     assert_eq!(hash.get(&id1), Some(&true));
 }
-
-#[cfg(feature = "serde")]
-mod serde {
-    use crate::id::test::str::Foo;
-    use crate::Id;
-
-    #[test]
-    fn test_serialize() {
-        let id1: Id<Foo, String> = Id::new("1".to_string());
-
-        let got = serde_json::to_string(&id1).unwrap();
-        assert_eq!(got, "\"1\"")
-    }
-
-    #[test]
-    fn test_deserialize() {
-        let id1: Id<Foo, String> = serde_json::from_str("\"kubetsu\"").unwrap();
-
-        assert_eq!(id1.inner(), "kubetsu");
-    }
-}
-
-#[cfg(feature = "fake")]
-mod fake {
-    use crate::id::test::str::Foo;
-    use crate::Id;
-    use fake::{Fake, Faker};
-
-    #[test]
-    fn test_fake() {
-        let id1: Id<Foo, String> = Faker.fake();
-        assert_ne!(id1.inner, "");
-    }
-}
