@@ -27,7 +27,11 @@ macro_rules! impl_sqlx {
     // Concrete form: impl_sqlx!(UserId(i64));
     ($name:ident($inner:ty)) => {
         const _: () = {
-            fn _assert_kubetsu_id() where $name: $crate::__private::kubetsu::KubetsuId<Inner = $inner> {}
+            fn _assert_kubetsu_id()
+            where
+                $name: $crate::__private::kubetsu::KubetsuId<Inner = $inner>,
+            {
+            }
         };
 
         $crate::__impl_sqlx_any!([] $name, $inner);
@@ -38,7 +42,11 @@ macro_rules! impl_sqlx {
     // Generic form: impl_sqlx!(MyId<T, U>);
     ($name:ident<$phantom:ident, $inner:ident>) => {
         const _: () = {
-            fn _assert_kubetsu_id<$phantom, $inner>() where $name<$phantom, $inner>: $crate::__private::kubetsu::KubetsuId<Inner = $inner> {}
+            fn _assert_kubetsu_id<$phantom, $inner>()
+            where
+                $name<$phantom, $inner>: $crate::__private::kubetsu::KubetsuId<Inner = $inner>,
+            {
+            }
         };
 
         $crate::__impl_sqlx_any!([$phantom, $inner] $name<$phantom, $inner>, $inner);
