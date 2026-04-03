@@ -4,7 +4,7 @@
 
 ## Usage
 
-```rust,ignore
+```rust
 kubetsu::define_id!(pub struct UserId(i64););
 kubetsu_sqlx::impl_sqlx!(UserId(i64));
 ```
@@ -14,7 +14,7 @@ Which database backends are supported depends on the enabled features:
 
 Generic form is also supported:
 
-```rust,ignore
+```rust
 kubetsu::define_id!(pub struct MyId<T, U>;);
 kubetsu_sqlx::impl_sqlx!(MyId<T, U>);
 ```
