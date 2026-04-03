@@ -542,8 +542,8 @@ mod tests {
         use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};
         use sqlx::{FromRow, MySqlPool};
         use std::sync::Mutex;
-        use testcontainers::runners::AsyncRunner;
         use testcontainers::ContainerAsync;
+        use testcontainers::runners::AsyncRunner;
         use testcontainers_modules::mysql::Mysql;
         use tokio::sync::OnceCell;
 
@@ -618,8 +618,8 @@ mod tests {
         use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
         use sqlx::{FromRow, PgPool};
         use std::sync::Mutex;
-        use testcontainers::runners::AsyncRunner;
         use testcontainers::ContainerAsync;
+        use testcontainers::runners::AsyncRunner;
         use testcontainers_modules::postgres::Postgres;
         use tokio::sync::OnceCell;
 
@@ -691,7 +691,7 @@ mod tests {
     #[cfg(feature = "any")]
     mod any_tests {
         use super::*;
-        use sqlx::any::{install_default_drivers, AnyConnectOptions, AnyPoolOptions};
+        use sqlx::any::{AnyConnectOptions, AnyPoolOptions, install_default_drivers};
         use sqlx::{AnyPool, FromRow};
         use std::str::FromStr;
 
