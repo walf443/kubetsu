@@ -1,0 +1,18 @@
+[package]
+name = "kubetsu-fake"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+
+authors = ["Keiji Yoshimi"]
+
+license = "MIT"
+
+description = "fake support for kubetsu ID types"
+
+homepage = "https://github.com/walf443/kubetsu"
+repository = "https://github.com/walf443/kubetsu.git"
+
+[dependencies]
+kubetsu = { version = "0.7", path = "../kubetsu" }
+fake = { version = "5", features = ["derive"] }

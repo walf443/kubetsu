@@ -1,0 +1,32 @@
+[package]
+name = "kubetsu-sqlx"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+
+authors = ["Keiji Yoshimi"]
+
+license = "MIT"
+
+description = "sqlx support for kubetsu ID types"
+
+homepage = "https://github.com/walf443/kubetsu"
+repository = "https://github.com/walf443/kubetsu.git"
+
+[features]
+default = []
+any = ["sqlx/any"]
+mysql = ["sqlx/mysql"]
+postgres = ["sqlx/postgres"]
+sqlite = ["sqlx/sqlite"]
+
+[dependencies]
+kubetsu = { version = "0.7", path = "../kubetsu" }
+sqlx = { version = "0.8", default-features = false, features = [] }
+
+[dev-dependencies]
+sqlx = { version = "0.8", features = ["runtime-tokio", "macros", "sqlite", "mysql", "postgres", "any"] }
+tokio = { version = "1", features = ["macros", "rt"] }
+testcontainers = { version = "0.27" }
+testcontainers-modules = { version = "0.15", features = ["postgres", "mysql"] }
+ctor = { version = "0.8" }

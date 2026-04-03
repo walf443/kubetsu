@@ -1,328 +1,69 @@
-#[cfg(test)]
-mod test;
+#[doc(hidden)]
+pub mod __private {
+    pub use kubetsu;
+    pub use sqlx;
+}
 
-/// Define a custom ID type with the same capabilities as `kubetsu::Id`.
+/// Implement sqlx `Type`, `Encode`, and `Decode` for a kubetsu ID type.
 ///
-/// This macro generates a struct that wraps an inner value type,
-/// along with trait implementations for common operations.
-///
-/// # Generic form
-///
-/// Generates a generic type with `PhantomData`, equivalent to `kubetsu::Id<T, U>`.
-/// The first type parameter is the phantom type tag, the second is the inner value type.
-///
-/// ```rust
-/// kubetsu::define_id!(pub struct MyId<T, U>;);
-///
-/// struct User;
-/// struct Item;
-/// type UserId = MyId<User, i64>;
-/// type ItemId = MyId<Item, i64>;
-///
-/// let user_id = UserId::new(42);
-/// assert_eq!(*user_id.inner(), 42);
-/// ```
+/// Which database backends are supported depends on the enabled features:
+/// `any`, `mysql`, `postgres`, `sqlite`.
 ///
 /// # Concrete form
 ///
-/// Generates a standalone type with a fixed inner type.
-///
-/// ```rust
+/// ```rust,ignore
 /// kubetsu::define_id!(pub struct UserId(i64););
-///
-/// let user_id = UserId::new(42);
-/// assert_eq!(*user_id.inner(), 42);
+/// kubetsu_sqlx::impl_sqlx!(UserId(i64));
 /// ```
 ///
-/// # Trait implementations
+/// # Generic form
 ///
-/// The generated type always implements:
-/// - `new()` and `inner()` methods
-/// - `Debug`, `PartialEq`, `Eq`, `Hash`, `Clone`
-/// - `From<InnerType>`
-///
-/// When kubetsu is compiled with optional features, the type also implements:
-/// - `serde::Serialize` / `serde::Deserialize` (feature `serde`)
-/// - `sqlx::Type` / `sqlx::Encode` / `sqlx::Decode` (features `sqlx-*`)
-/// - `fake::Dummy` (feature `fake`)
+/// ```rust,ignore
+/// kubetsu::define_id!(pub struct MyId<T, U>;);
+/// kubetsu_sqlx::impl_sqlx!(MyId<T, U>);
+/// ```
 #[macro_export]
-macro_rules! define_id {
-    // Generic form: define_id!(pub struct MyId<T, U>;);
-    ($(#[$meta:meta])* $vis:vis struct $name:ident<$phantom:ident, $inner:ident>;) => {
-        $(#[$meta])*
-        $vis struct $name<$phantom, $inner> {
-            inner: $inner,
-            _phantom: ::std::marker::PhantomData<$phantom>,
-        }
-
-        impl<$phantom, $inner> $name<$phantom, $inner> {
-            /// Create a new instance. You should use this method carefully because the value is not checked as valid.
-            pub fn new(inner: $inner) -> Self {
-                Self {
-                    inner,
-                    _phantom: ::std::marker::PhantomData,
-                }
-            }
-
-            /// Access the internal value reference. You should use this method carefully.
-            pub fn inner(&self) -> &$inner {
-                &self.inner
-            }
-        }
-
-        $crate::__impl_id_core_traits!([$phantom, $inner] $name<$phantom, $inner>, $inner);
-        $crate::__impl_id_serde!([$phantom, $inner] $name<$phantom, $inner>, $inner);
-        $crate::__impl_id_fake!([$phantom, $inner] $name<$phantom, $inner>, $inner);
-        $crate::__impl_id_sqlx_any!([$phantom, $inner] $name<$phantom, $inner>, $inner);
-        $crate::__impl_id_sqlx_mysql!([$phantom, $inner] $name<$phantom, $inner>, $inner);
-        $crate::__impl_id_sqlx_postgres!([$phantom, $inner] $name<$phantom, $inner>, $inner);
-        $crate::__impl_id_sqlx_sqlite!([$phantom, $inner] $name<$phantom, $inner>, $inner);
-    };
-    // Concrete form: define_id!(pub struct UserId(i64););
-    ($(#[$meta:meta])* $vis:vis struct $name:ident($inner:ty);) => {
-        $(#[$meta])*
-        $vis struct $name {
-            inner: $inner,
-        }
-
-        impl $name {
-            /// Create a new instance. You should use this method carefully because the value is not checked as valid.
-            pub fn new(inner: $inner) -> Self {
-                Self { inner }
-            }
-
-            /// Access the internal value reference. You should use this method carefully.
-            pub fn inner(&self) -> &$inner {
-                &self.inner
-            }
-        }
-
-        $crate::__impl_id_core_traits!([] $name, $inner);
-        $crate::__impl_id_serde!([] $name, $inner);
-        $crate::__impl_id_fake!([] $name, $inner);
-        $crate::__impl_id_sqlx_any!([] $name, $inner);
-        $crate::__impl_id_sqlx_mysql!([] $name, $inner);
-        $crate::__impl_id_sqlx_postgres!([] $name, $inner);
-        $crate::__impl_id_sqlx_sqlite!([] $name, $inner);
-    };
-}
-
-// =============================================================================
-// Internal macros for trait implementations.
-// These are exported because macro_rules! requires #[macro_export] for
-// cross-crate usage, but they are not part of the public API and may change
-// without notice.
-// =============================================================================
-
-// Core traits: Debug, PartialEq, Eq, Hash, Clone, From
-
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __impl_id_core_traits {
-    // Concrete type (no generics)
-    ([] $name:ty, $inner:ty) => {
-        impl ::std::fmt::Debug for $name {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                self.inner().fmt(f)
-            }
-        }
-
-        impl ::std::cmp::PartialEq for $name {
-            fn eq(&self, other: &Self) -> bool {
-                self.inner().eq(other.inner())
-            }
-        }
-
-        impl ::std::cmp::Eq for $name {}
-
-        impl ::std::hash::Hash for $name {
-            fn hash<H: ::std::hash::Hasher>(&self, state: &mut H) {
-                self.inner().hash(state)
-            }
-        }
-
-        impl ::std::clone::Clone for $name {
-            fn clone(&self) -> Self {
-                Self::new(self.inner().clone())
-            }
-        }
-
-        impl ::std::convert::From<$inner> for $name {
-            fn from(value: $inner) -> Self {
-                Self::new(value)
-            }
-        }
-    };
-    // Generic type (e.g. Id<T, U>)
-    ([$($gen:tt)+] $name:ty, $inner:ty) => {
-        impl<$($gen)+> ::std::fmt::Debug for $name where $inner: ::std::fmt::Debug {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                self.inner().fmt(f)
-            }
-        }
-
-        impl<$($gen)+> ::std::cmp::PartialEq for $name where $inner: ::std::cmp::PartialEq {
-            fn eq(&self, other: &Self) -> bool {
-                self.inner().eq(other.inner())
-            }
-        }
-
-        impl<$($gen)+> ::std::cmp::Eq for $name where $inner: ::std::cmp::Eq {}
-
-        /// you can use as hash key if value implement [Hash].
-        impl<$($gen)+> ::std::hash::Hash for $name where $inner: ::std::cmp::PartialEq + ::std::hash::Hash {
-            fn hash<H: ::std::hash::Hasher>(&self, state: &mut H) {
-                self.inner().hash(state)
-            }
-        }
-
-        /// you can clone if value implement [Clone].
-        impl<$($gen)+> ::std::clone::Clone for $name where $inner: ::std::clone::Clone {
-            fn clone(&self) -> Self {
-                Self::new(self.inner().clone())
-            }
-        }
-
-        impl<$($gen)+> ::std::convert::From<$inner> for $name {
-            fn from(value: $inner) -> Self {
-                Self::new(value)
-            }
-        }
-    };
-}
-
-// =============================================================================
-// serde
-// =============================================================================
-
-#[cfg(feature = "serde")]
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __impl_id_serde {
-    // Concrete type
-    ([] $name:ty, $inner:ty) => {
-        impl $crate::__private::serde::Serialize for $name {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+macro_rules! impl_sqlx {
+    // Concrete form: impl_sqlx!(UserId(i64));
+    ($name:ident($inner:ty)) => {
+        const _: () = {
+            fn _assert_kubetsu_id()
             where
-                S: $crate::__private::serde::Serializer,
+                $name: $crate::__private::kubetsu::KubetsuId<Inner = $inner>,
             {
-                <$inner as $crate::__private::serde::Serialize>::serialize(
-                    self.inner(),
-                    serializer,
-                )
             }
-        }
+        };
 
-        impl<'de> $crate::__private::serde::Deserialize<'de> for $name {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        $crate::__impl_sqlx_any!([] $name, $inner);
+        $crate::__impl_sqlx_mysql!([] $name, $inner);
+        $crate::__impl_sqlx_postgres!([] $name, $inner);
+        $crate::__impl_sqlx_sqlite!([] $name, $inner);
+    };
+    // Generic form: impl_sqlx!(MyId<T, U>);
+    ($name:ident<$phantom:ident, $inner:ident>) => {
+        const _: () = {
+            fn _assert_kubetsu_id<$phantom, $inner>()
             where
-                D: $crate::__private::serde::Deserializer<'de>,
+                $name<$phantom, $inner>: $crate::__private::kubetsu::KubetsuId<Inner = $inner>,
             {
-                let inner =
-                    <$inner as $crate::__private::serde::Deserialize>::deserialize(deserializer)?;
-                Ok(Self::new(inner))
             }
-        }
+        };
+
+        $crate::__impl_sqlx_any!([$phantom, $inner] $name<$phantom, $inner>, $inner);
+        $crate::__impl_sqlx_mysql!([$phantom, $inner] $name<$phantom, $inner>, $inner);
+        $crate::__impl_sqlx_postgres!([$phantom, $inner] $name<$phantom, $inner>, $inner);
+        $crate::__impl_sqlx_sqlite!([$phantom, $inner] $name<$phantom, $inner>, $inner);
     };
-    // Generic type
-    ([$($gen:tt)+] $name:ty, $inner:ty) => {
-        /// you can serialize if feature serde enabled and inner type implement [Serialize].
-        impl<$($gen)+> $crate::__private::serde::Serialize for $name
-        where
-            $inner: $crate::__private::serde::Serialize,
-        {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: $crate::__private::serde::Serializer,
-            {
-                <$inner as $crate::__private::serde::Serialize>::serialize(
-                    self.inner(),
-                    serializer,
-                )
-            }
-        }
-
-        /// you can deserialize if feature serde enabled and inner type implement [Deserialize].
-        impl<'de, $($gen)+> $crate::__private::serde::Deserialize<'de> for $name
-        where
-            $inner: $crate::__private::serde::Deserialize<'de>,
-        {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: $crate::__private::serde::Deserializer<'de>,
-            {
-                let inner =
-                    <$inner as $crate::__private::serde::Deserialize>::deserialize(deserializer)?;
-                Ok(Self::new(inner))
-            }
-        }
-    };
-}
-
-#[cfg(not(feature = "serde"))]
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __impl_id_serde {
-    ([] $name:ty, $inner:ty) => {};
-    ([$($gen:tt)+] $name:ty, $inner:ty) => {};
-}
-
-// =============================================================================
-// fake
-// =============================================================================
-
-#[cfg(feature = "fake")]
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __impl_id_fake {
-    // Concrete type
-    ([] $name:ty, $inner:ty) => {
-        impl $crate::__private::fake::Dummy<$crate::__private::fake::Faker> for $name {
-            fn dummy_with_rng<R: $crate::__private::fake::RngExt + ?Sized>(
-                config: &$crate::__private::fake::Faker,
-                rng: &mut R,
-            ) -> Self {
-                let inner =
-                    $crate::__private::fake::Fake::fake_with_rng::<$inner, R>(config, rng);
-                Self::new(inner)
-            }
-        }
-    };
-    // Generic type
-    ([$($gen:tt)+] $name:ty, $inner:ty) => {
-        impl<$($gen)+> $crate::__private::fake::Dummy<$crate::__private::fake::Faker> for $name
-        where
-            $inner: $crate::__private::fake::Dummy<$crate::__private::fake::Faker>,
-        {
-            fn dummy_with_rng<R: $crate::__private::fake::RngExt + ?Sized>(
-                config: &$crate::__private::fake::Faker,
-                rng: &mut R,
-            ) -> Self {
-                let inner =
-                    $crate::__private::fake::Fake::fake_with_rng::<$inner, R>(config, rng);
-                Self::new(inner)
-            }
-        }
-    };
-}
-
-#[cfg(not(feature = "fake"))]
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __impl_id_fake {
-    ([] $name:ty, $inner:ty) => {};
-    ([$($gen:tt)+] $name:ty, $inner:ty) => {};
 }
 
 // =============================================================================
 // sqlx-any
 // =============================================================================
 
-#[cfg(feature = "sqlx-any")]
+#[cfg(feature = "any")]
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __impl_id_sqlx_any {
-    // Concrete type
+macro_rules! __impl_sqlx_any {
     ([] $name:ty, $inner:ty) => {
         impl $crate::__private::sqlx::Type<$crate::__private::sqlx::Any> for $name {
             fn type_info() -> $crate::__private::sqlx::any::AnyTypeInfo {
@@ -357,7 +98,6 @@ macro_rules! __impl_id_sqlx_any {
             }
         }
     };
-    // Generic type
     ([$($gen:tt)+] $name:ty, $inner:ty) => {
         impl<$($gen)+> $crate::__private::sqlx::Type<$crate::__private::sqlx::Any> for $name
         where
@@ -403,10 +143,10 @@ macro_rules! __impl_id_sqlx_any {
     };
 }
 
-#[cfg(not(feature = "sqlx-any"))]
+#[cfg(not(feature = "any"))]
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __impl_id_sqlx_any {
+macro_rules! __impl_sqlx_any {
     ([] $name:ty, $inner:ty) => {};
     ([$($gen:tt)+] $name:ty, $inner:ty) => {};
 }
@@ -415,11 +155,10 @@ macro_rules! __impl_id_sqlx_any {
 // sqlx-mysql
 // =============================================================================
 
-#[cfg(feature = "sqlx-mysql")]
+#[cfg(feature = "mysql")]
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __impl_id_sqlx_mysql {
-    // Concrete type
+macro_rules! __impl_sqlx_mysql {
     ([] $name:ty, $inner:ty) => {
         impl $crate::__private::sqlx::Type<$crate::__private::sqlx::MySql> for $name {
             fn type_info() -> $crate::__private::sqlx::mysql::MySqlTypeInfo {
@@ -454,7 +193,6 @@ macro_rules! __impl_id_sqlx_mysql {
             }
         }
     };
-    // Generic type
     ([$($gen:tt)+] $name:ty, $inner:ty) => {
         impl<$($gen)+> $crate::__private::sqlx::Type<$crate::__private::sqlx::MySql> for $name
         where
@@ -500,10 +238,10 @@ macro_rules! __impl_id_sqlx_mysql {
     };
 }
 
-#[cfg(not(feature = "sqlx-mysql"))]
+#[cfg(not(feature = "mysql"))]
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __impl_id_sqlx_mysql {
+macro_rules! __impl_sqlx_mysql {
     ([] $name:ty, $inner:ty) => {};
     ([$($gen:tt)+] $name:ty, $inner:ty) => {};
 }
@@ -512,11 +250,10 @@ macro_rules! __impl_id_sqlx_mysql {
 // sqlx-postgres
 // =============================================================================
 
-#[cfg(feature = "sqlx-postgres")]
+#[cfg(feature = "postgres")]
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __impl_id_sqlx_postgres {
-    // Concrete type
+macro_rules! __impl_sqlx_postgres {
     ([] $name:ty, $inner:ty) => {
         impl $crate::__private::sqlx::Type<$crate::__private::sqlx::Postgres> for $name {
             fn type_info() -> <$crate::__private::sqlx::Postgres as $crate::__private::sqlx::Database>::TypeInfo {
@@ -553,7 +290,6 @@ macro_rules! __impl_id_sqlx_postgres {
             }
         }
     };
-    // Generic type
     ([$($gen:tt)+] $name:ty, $inner:ty) => {
         impl<$($gen)+> $crate::__private::sqlx::Type<$crate::__private::sqlx::Postgres> for $name
         where
@@ -601,10 +337,10 @@ macro_rules! __impl_id_sqlx_postgres {
     };
 }
 
-#[cfg(not(feature = "sqlx-postgres"))]
+#[cfg(not(feature = "postgres"))]
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __impl_id_sqlx_postgres {
+macro_rules! __impl_sqlx_postgres {
     ([] $name:ty, $inner:ty) => {};
     ([$($gen:tt)+] $name:ty, $inner:ty) => {};
 }
@@ -613,11 +349,10 @@ macro_rules! __impl_id_sqlx_postgres {
 // sqlx-sqlite
 // =============================================================================
 
-#[cfg(feature = "sqlx-sqlite")]
+#[cfg(feature = "sqlite")]
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __impl_id_sqlx_sqlite {
-    // Concrete type
+macro_rules! __impl_sqlx_sqlite {
     ([] $name:ty, $inner:ty) => {
         impl $crate::__private::sqlx::Type<$crate::__private::sqlx::Sqlite> for $name {
             fn type_info() -> $crate::__private::sqlx::sqlite::SqliteTypeInfo {
@@ -652,7 +387,6 @@ macro_rules! __impl_id_sqlx_sqlite {
             }
         }
     };
-    // Generic type
     ([$($gen:tt)+] $name:ty, $inner:ty) => {
         impl<$($gen)+> $crate::__private::sqlx::Type<$crate::__private::sqlx::Sqlite> for $name
         where
@@ -698,10 +432,309 @@ macro_rules! __impl_id_sqlx_sqlite {
     };
 }
 
-#[cfg(not(feature = "sqlx-sqlite"))]
+#[cfg(not(feature = "sqlite"))]
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __impl_id_sqlx_sqlite {
+macro_rules! __impl_sqlx_sqlite {
     ([] $name:ty, $inner:ty) => {};
     ([$($gen:tt)+] $name:ty, $inner:ty) => {};
+}
+
+#[cfg(test)]
+mod tests {
+    kubetsu::define_id!(
+        pub struct UserId(i64);
+    );
+    crate::impl_sqlx!(UserId(i64));
+
+    kubetsu::define_id!(
+        pub struct MyId<T, U>;
+    );
+    crate::impl_sqlx!(MyId<T, U>);
+
+    #[cfg(feature = "sqlite")]
+    mod sqlite_tests {
+        use super::*;
+
+        struct User;
+        type MyUserId = MyId<User, i64>;
+        use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+        use sqlx::{FromRow, SqlitePool};
+
+        async fn get_db_conn() -> Result<SqlitePool, sqlx::Error> {
+            let connect_info = SqliteConnectOptions::new();
+            let pool = SqlitePoolOptions::new()
+                .connect_with(connect_info)
+                .await
+                .unwrap();
+            Ok(pool)
+        }
+
+        #[derive(FromRow)]
+        struct Row {
+            id: UserId,
+        }
+
+        #[tokio::test]
+        async fn test_query_as() {
+            let conn = get_db_conn().await.unwrap();
+            let mut tx = conn.begin().await.unwrap();
+            let row: Row = sqlx::query_as("SELECT 1 as id")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(*row.id.inner(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_encode() {
+            let conn = get_db_conn().await.unwrap();
+            let id = UserId::new(1);
+
+            let mut tx = conn.begin().await.unwrap();
+            let got: i64 = sqlx::query_scalar("SELECT 1 WHERE 1 = ?")
+                .bind(&id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(got, 1);
+        }
+
+        #[derive(FromRow)]
+        struct GenericRow {
+            id: MyUserId,
+        }
+
+        #[tokio::test]
+        async fn test_generic_query_as() {
+            let conn = get_db_conn().await.unwrap();
+            let mut tx = conn.begin().await.unwrap();
+            let row: GenericRow = sqlx::query_as("SELECT 1 as id")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(*row.id.inner(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_generic_encode() {
+            let conn = get_db_conn().await.unwrap();
+            let id = MyUserId::new(1);
+
+            let mut tx = conn.begin().await.unwrap();
+            let got: i64 = sqlx::query_scalar("SELECT 1 WHERE 1 = ?")
+                .bind(&id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(got, 1);
+        }
+    }
+
+    #[cfg(feature = "mysql")]
+    mod mysql_tests {
+        use super::*;
+        use ctor::dtor;
+        use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};
+        use sqlx::{FromRow, MySqlPool};
+        use std::sync::Mutex;
+        use testcontainers::ContainerAsync;
+        use testcontainers::runners::AsyncRunner;
+        use testcontainers_modules::mysql::Mysql;
+        use tokio::sync::OnceCell;
+
+        static MYSQL_CONTAINER: Mutex<Option<ContainerAsync<Mysql>>> = Mutex::new(None);
+        static MYSQL_POOL: OnceCell<MySqlPool> = OnceCell::const_new();
+
+        async fn get_db_conn() -> Result<MySqlPool, sqlx::Error> {
+            let pool = MYSQL_POOL
+                .get_or_init(|| async {
+                    let container = Mysql::default().start().await.unwrap();
+                    let host_port = container.get_host_port_ipv4(3306).await.unwrap();
+                    let connect_info = MySqlConnectOptions::new()
+                        .host("127.0.0.1")
+                        .port(host_port)
+                        .username("root");
+                    let pool = MySqlPoolOptions::new()
+                        .connect_with(connect_info)
+                        .await
+                        .unwrap();
+                    *MYSQL_CONTAINER.lock().unwrap() = Some(container);
+                    pool
+                })
+                .await;
+            Ok(pool.clone())
+        }
+
+        #[dtor]
+        fn cleanup_mysql() {
+            if let Some(container) = MYSQL_CONTAINER.lock().ok().and_then(|mut g| g.take()) {
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                let _ = rt.block_on(container.rm());
+            }
+        }
+
+        #[derive(FromRow)]
+        struct Row {
+            id: UserId,
+        }
+
+        #[tokio::test]
+        async fn test_query_as() {
+            let conn = get_db_conn().await.unwrap();
+            let mut tx = conn.begin().await.unwrap();
+            let row: Row = sqlx::query_as("SELECT 1 as id")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(*row.id.inner(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_encode() {
+            let conn = get_db_conn().await.unwrap();
+            let id = UserId::new(1);
+
+            let mut tx = conn.begin().await.unwrap();
+            let got: i64 = sqlx::query_scalar("SELECT 1 WHERE 1 = ?")
+                .bind(&id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(got, 1);
+        }
+    }
+
+    #[cfg(feature = "postgres")]
+    mod postgres_tests {
+        use super::*;
+        use ctor::dtor;
+        use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+        use sqlx::{FromRow, PgPool};
+        use std::sync::Mutex;
+        use testcontainers::ContainerAsync;
+        use testcontainers::runners::AsyncRunner;
+        use testcontainers_modules::postgres::Postgres;
+        use tokio::sync::OnceCell;
+
+        static POSTGRES_CONTAINER: Mutex<Option<ContainerAsync<Postgres>>> = Mutex::new(None);
+        static POSTGRES_POOL: OnceCell<PgPool> = OnceCell::const_new();
+
+        async fn get_db_conn() -> Result<PgPool, sqlx::Error> {
+            let pool = POSTGRES_POOL
+                .get_or_init(|| async {
+                    let container = Postgres::default().start().await.unwrap();
+                    let host_port = container.get_host_port_ipv4(5432).await.unwrap();
+                    let connect_info = PgConnectOptions::new()
+                        .host("127.0.0.1")
+                        .port(host_port)
+                        .username("postgres")
+                        .password("postgres");
+                    let pool = PgPoolOptions::new()
+                        .connect_with(connect_info)
+                        .await
+                        .unwrap();
+                    *POSTGRES_CONTAINER.lock().unwrap() = Some(container);
+                    pool
+                })
+                .await;
+            Ok(pool.clone())
+        }
+
+        #[dtor]
+        fn cleanup_postgres() {
+            if let Some(container) = POSTGRES_CONTAINER.lock().ok().and_then(|mut g| g.take()) {
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                let _ = rt.block_on(container.rm());
+            }
+        }
+
+        #[derive(FromRow)]
+        struct Row {
+            id: UserId,
+        }
+
+        #[tokio::test]
+        async fn test_query_as() {
+            let conn = get_db_conn().await.unwrap();
+            let mut tx = conn.begin().await.unwrap();
+            let row: Row = sqlx::query_as("SELECT 1::bigint as id")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(*row.id.inner(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_encode() {
+            let conn = get_db_conn().await.unwrap();
+            let id = UserId::new(1);
+
+            let mut tx = conn.begin().await.unwrap();
+            let got: i64 = sqlx::query_scalar("SELECT $1::bigint")
+                .bind(&id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(got, 1);
+        }
+    }
+
+    #[cfg(feature = "any")]
+    mod any_tests {
+        use super::*;
+        use sqlx::any::{AnyConnectOptions, AnyPoolOptions, install_default_drivers};
+        use sqlx::{AnyPool, FromRow};
+        use std::str::FromStr;
+
+        async fn get_db_conn() -> Result<AnyPool, sqlx::Error> {
+            install_default_drivers();
+            let connect_info = AnyConnectOptions::from_str("sqlite:").unwrap();
+            let pool = AnyPoolOptions::new()
+                .connect_with(connect_info)
+                .await
+                .unwrap();
+            Ok(pool)
+        }
+
+        #[derive(FromRow)]
+        struct Row {
+            id: UserId,
+        }
+
+        #[tokio::test]
+        async fn test_query_as() {
+            let conn = get_db_conn().await.unwrap();
+            let mut tx = conn.begin().await.unwrap();
+            let row: Row = sqlx::query_as("SELECT 1 as id")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(*row.id.inner(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_encode() {
+            let conn = get_db_conn().await.unwrap();
+            let id = UserId::new(1);
+
+            let mut tx = conn.begin().await.unwrap();
+            let got: i64 = sqlx::query_scalar("SELECT 1 WHERE 1 = ?")
+                .bind(&id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(got, 1);
+        }
+    }
 }
