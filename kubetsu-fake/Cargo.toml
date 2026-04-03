@@ -1,12 +1,14 @@
 [package]
 name = "kubetsu-fake"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.85"
 
 authors = ["Keiji Yoshimi"]
 
 license = "MIT"
+
+readme = "README.md"
 
 description = "fake support for kubetsu ID types"
 

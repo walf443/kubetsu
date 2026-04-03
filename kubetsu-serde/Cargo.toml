@@ -8,6 +8,8 @@ authors = ["Keiji Yoshimi"]
 
 license = "MIT"
 
+readme = "README.md"
+
 description = "serde support for kubetsu ID types"
 
 homepage = "https://github.com/walf443/kubetsu"

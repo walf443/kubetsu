@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 #[doc(hidden)]
 pub mod __private {
     pub use fake;

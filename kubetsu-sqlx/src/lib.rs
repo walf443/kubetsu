@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 #[doc(hidden)]
 pub mod __private {
     pub use kubetsu;
@@ -11,14 +13,14 @@ pub mod __private {
 ///
 /// # Concrete form
 ///
-/// ```rust,ignore
+/// ```rust
 /// kubetsu::define_id!(pub struct UserId(i64););
 /// kubetsu_sqlx::impl_sqlx!(UserId(i64));
 /// ```
 ///
 /// # Generic form
 ///
-/// ```rust,ignore
+/// ```rust
 /// kubetsu::define_id!(pub struct MyId<T, U>;);
 /// kubetsu_sqlx::impl_sqlx!(MyId<T, U>);
 /// ```
