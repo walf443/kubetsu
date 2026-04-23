@@ -7,4 +7,3 @@ publish = false
 [dependencies]
 kubetsu = { path = "../kubetsu" }
 kubetsu-serde = { path = "../kubetsu-serde" }
-serde = { version = "1", default-features = false }

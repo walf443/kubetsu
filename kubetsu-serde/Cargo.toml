@@ -13,7 +13,7 @@ readme = "README.md"
 description = "serde support for kubetsu ID types"
 
 keywords = ["no-std", "serde", "newtype", "id"]
-categories = ["no-std", "encoding"]
+categories = ["encoding", "no-std"]
 
 homepage = "https://github.com/walf443/kubetsu"
 repository = "https://github.com/walf443/kubetsu.git"
