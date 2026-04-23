@@ -12,6 +12,9 @@ readme = "README.md"
 
 description = "fake support for kubetsu ID types"
 
+keywords = ["fake", "dummy", "newtype", "id", "testing"]
+categories = ["development-tools::testing"]
+
 homepage = "https://github.com/walf443/kubetsu"
 repository = "https://github.com/walf443/kubetsu.git"
 
