@@ -12,6 +12,9 @@ license = "MIT"
 
 description = "distinguish value type of other struct"
 
+keywords = ["newtype", "id", "type-safety", "no-std"]
+categories = ["rust-patterns", "no-std"]
+
 homepage = "https://github.com/walf443/kubetsu"
 repository = "https://github.com/walf443/kubetsu.git"
 

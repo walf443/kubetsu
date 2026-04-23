@@ -118,6 +118,14 @@ fn main() {
 }
 ```
 
+# `no_std` support
+
+`kubetsu` and `kubetsu-serde` work in `#![no_std]` crates. The
+`define_id!` macro expands to `::core::*` paths only, so it has no
+dependency on `std` or `alloc`. Adapter crates `kubetsu-fake` and
+`kubetsu-sqlx` remain `std`-only because their upstream dependencies
+require `std`.
+
 # Install
 
 ```bash
