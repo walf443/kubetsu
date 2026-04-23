@@ -6,4 +6,5 @@ members = [
     "kubetsu-fake",
     "kubetsu-sqlx",
     "kubetsu-tests",
+    "kubetsu-no-std-tests",
 ]
