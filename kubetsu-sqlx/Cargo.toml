@@ -12,8 +12,7 @@ readme = "README.md"
 
 description = "sqlx support for kubetsu ID types"
 
-keywords = ["sqlx", "database", "newtype", "id"]
-categories = ["database"]
+keywords = ["sqlx", "newtype", "id"]
 
 homepage = "https://github.com/walf443/kubetsu"
 repository = "https://github.com/walf443/kubetsu.git"
