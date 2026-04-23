@@ -33,3 +33,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace --features kubetsu-sqlx/any,kubetsu-sqlx/mysql,kubetsu-sqlx/postgres,kubetsu-sqlx/sqlite
+
+  no_std:
+    name: Build (no_std)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build -p kubetsu --target thumbv7em-none-eabihf

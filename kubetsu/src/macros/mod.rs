@@ -47,7 +47,7 @@ macro_rules! define_id {
         $(#[$meta])*
         $vis struct $name<$phantom, $inner> {
             inner: $inner,
-            _phantom: ::std::marker::PhantomData<$phantom>,
+            _phantom: ::core::marker::PhantomData<$phantom>,
         }
 
         impl<$phantom, $inner> $name<$phantom, $inner> {
@@ -55,7 +55,7 @@ macro_rules! define_id {
             pub fn new(inner: $inner) -> Self {
                 Self {
                     inner,
-                    _phantom: ::std::marker::PhantomData,
+                    _phantom: ::core::marker::PhantomData,
                 }
             }
 
@@ -71,7 +71,7 @@ macro_rules! define_id {
             fn new(inner: $inner) -> Self {
                 Self {
                     inner,
-                    _phantom: ::std::marker::PhantomData,
+                    _phantom: ::core::marker::PhantomData,
                 }
             }
 
@@ -131,33 +131,33 @@ macro_rules! define_id {
 macro_rules! __impl_id_core_traits {
     // Concrete type (no generics)
     ([] $name:ty, $inner:ty) => {
-        impl ::std::fmt::Debug for $name {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        impl ::core::fmt::Debug for $name {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                 self.inner().fmt(f)
             }
         }
 
-        impl ::std::cmp::PartialEq for $name {
+        impl ::core::cmp::PartialEq for $name {
             fn eq(&self, other: &Self) -> bool {
                 self.inner().eq(other.inner())
             }
         }
 
-        impl ::std::cmp::Eq for $name {}
+        impl ::core::cmp::Eq for $name {}
 
-        impl ::std::hash::Hash for $name {
-            fn hash<H: ::std::hash::Hasher>(&self, state: &mut H) {
+        impl ::core::hash::Hash for $name {
+            fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
                 self.inner().hash(state)
             }
         }
 
-        impl ::std::clone::Clone for $name {
+        impl ::core::clone::Clone for $name {
             fn clone(&self) -> Self {
                 Self::new(self.inner().clone())
             }
         }
 
-        impl ::std::convert::From<$inner> for $name {
+        impl ::core::convert::From<$inner> for $name {
             fn from(value: $inner) -> Self {
                 Self::new(value)
             }
@@ -165,35 +165,35 @@ macro_rules! __impl_id_core_traits {
     };
     // Generic type (e.g. Id<T, U>)
     ([$($gen:tt)+] $name:ty, $inner:ty) => {
-        impl<$($gen)+> ::std::fmt::Debug for $name where $inner: ::std::fmt::Debug {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        impl<$($gen)+> ::core::fmt::Debug for $name where $inner: ::core::fmt::Debug {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                 self.inner().fmt(f)
             }
         }
 
-        impl<$($gen)+> ::std::cmp::PartialEq for $name where $inner: ::std::cmp::PartialEq {
+        impl<$($gen)+> ::core::cmp::PartialEq for $name where $inner: ::core::cmp::PartialEq {
             fn eq(&self, other: &Self) -> bool {
                 self.inner().eq(other.inner())
             }
         }
 
-        impl<$($gen)+> ::std::cmp::Eq for $name where $inner: ::std::cmp::Eq {}
+        impl<$($gen)+> ::core::cmp::Eq for $name where $inner: ::core::cmp::Eq {}
 
         /// you can use as hash key if value implement [Hash].
-        impl<$($gen)+> ::std::hash::Hash for $name where $inner: ::std::cmp::PartialEq + ::std::hash::Hash {
-            fn hash<H: ::std::hash::Hasher>(&self, state: &mut H) {
+        impl<$($gen)+> ::core::hash::Hash for $name where $inner: ::core::cmp::PartialEq + ::core::hash::Hash {
+            fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
                 self.inner().hash(state)
             }
         }
 
         /// you can clone if value implement [Clone].
-        impl<$($gen)+> ::std::clone::Clone for $name where $inner: ::std::clone::Clone {
+        impl<$($gen)+> ::core::clone::Clone for $name where $inner: ::core::clone::Clone {
             fn clone(&self) -> Self {
                 Self::new(self.inner().clone())
             }
         }
 
-        impl<$($gen)+> ::std::convert::From<$inner> for $name {
+        impl<$($gen)+> ::core::convert::From<$inner> for $name {
             fn from(value: $inner) -> Self {
                 Self::new(value)
             }
