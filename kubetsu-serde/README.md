@@ -30,6 +30,12 @@ let json = serde_json::to_string(&id).unwrap();
 assert_eq!(json, "42");
 ```
 
+## `no_std` support
+
+This crate works in `#![no_std]` environments. The `impl_serde!` macro
+expands to `::core::*` paths only and the `serde` dependency is pulled
+with `default-features = false`.
+
 ## Install
 
 ```bash
