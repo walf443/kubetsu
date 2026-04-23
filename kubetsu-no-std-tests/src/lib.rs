@@ -6,5 +6,7 @@
 
 #![no_std]
 
-kubetsu::define_id!(pub struct MyId<T, U>;);
+kubetsu::define_id!(
+    pub struct MyId<T, U>;
+);
 kubetsu_serde::impl_serde!(MyId<T, U>);
