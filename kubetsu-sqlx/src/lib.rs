@@ -540,7 +540,7 @@ mod tests {
     #[cfg(feature = "mysql")]
     mod mysql_tests {
         use super::*;
-        use ctor::dtor;
+        use dtor::dtor;
         use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};
         use sqlx::{FromRow, MySqlPool};
         use std::sync::Mutex;
@@ -616,7 +616,7 @@ mod tests {
     #[cfg(feature = "postgres")]
     mod postgres_tests {
         use super::*;
-        use ctor::dtor;
+        use dtor::dtor;
         use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
         use sqlx::{FromRow, PgPool};
         use std::sync::Mutex;
