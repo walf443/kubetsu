@@ -80,7 +80,7 @@ macro_rules! __impl_sqlx_any {
         impl $crate::__private::sqlx::Encode<'_, $crate::__private::sqlx::Any> for $name {
             fn encode_by_ref(
                 &self,
-                buf: &mut <$crate::__private::sqlx::Any as $crate::__private::sqlx::Database>::ArgumentBuffer<'_>,
+                buf: &mut <$crate::__private::sqlx::Any as $crate::__private::sqlx::Database>::ArgumentBuffer,
             ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError>
             {
                 <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Any>>::encode_by_ref(
@@ -120,7 +120,7 @@ macro_rules! __impl_sqlx_any {
         {
             fn encode_by_ref(
                 &self,
-                buf: &mut <$crate::__private::sqlx::Any as $crate::__private::sqlx::Database>::ArgumentBuffer<'_>,
+                buf: &mut <$crate::__private::sqlx::Any as $crate::__private::sqlx::Database>::ArgumentBuffer,
             ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError>
             {
                 <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Any>>::encode_by_ref(
@@ -175,7 +175,7 @@ macro_rules! __impl_sqlx_mysql {
         impl $crate::__private::sqlx::Encode<'_, $crate::__private::sqlx::MySql> for $name {
             fn encode_by_ref(
                 &self,
-                buf: &mut <$crate::__private::sqlx::MySql as $crate::__private::sqlx::Database>::ArgumentBuffer<'_>,
+                buf: &mut <$crate::__private::sqlx::MySql as $crate::__private::sqlx::Database>::ArgumentBuffer,
             ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError>
             {
                 <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::MySql>>::encode_by_ref(
@@ -215,7 +215,7 @@ macro_rules! __impl_sqlx_mysql {
         {
             fn encode_by_ref(
                 &self,
-                buf: &mut <$crate::__private::sqlx::MySql as $crate::__private::sqlx::Database>::ArgumentBuffer<'_>,
+                buf: &mut <$crate::__private::sqlx::MySql as $crate::__private::sqlx::Database>::ArgumentBuffer,
             ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError>
             {
                 <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::MySql>>::encode_by_ref(
@@ -272,7 +272,7 @@ macro_rules! __impl_sqlx_postgres {
         impl $crate::__private::sqlx::Encode<'_, $crate::__private::sqlx::Postgres> for $name {
             fn encode_by_ref(
                 &self,
-                buf: &mut <$crate::__private::sqlx::Postgres as $crate::__private::sqlx::Database>::ArgumentBuffer<'_>,
+                buf: &mut <$crate::__private::sqlx::Postgres as $crate::__private::sqlx::Database>::ArgumentBuffer,
             ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError>
             {
                 <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Postgres>>::encode_by_ref(
@@ -314,7 +314,7 @@ macro_rules! __impl_sqlx_postgres {
         {
             fn encode_by_ref(
                 &self,
-                buf: &mut <$crate::__private::sqlx::Postgres as $crate::__private::sqlx::Database>::ArgumentBuffer<'_>,
+                buf: &mut <$crate::__private::sqlx::Postgres as $crate::__private::sqlx::Database>::ArgumentBuffer,
             ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError>
             {
                 <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Postgres>>::encode_by_ref(
@@ -369,7 +369,7 @@ macro_rules! __impl_sqlx_sqlite {
         impl $crate::__private::sqlx::Encode<'_, $crate::__private::sqlx::Sqlite> for $name {
             fn encode_by_ref(
                 &self,
-                buf: &mut <$crate::__private::sqlx::Sqlite as $crate::__private::sqlx::Database>::ArgumentBuffer<'_>,
+                buf: &mut <$crate::__private::sqlx::Sqlite as $crate::__private::sqlx::Database>::ArgumentBuffer,
             ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError>
             {
                 <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Sqlite>>::encode_by_ref(
@@ -409,7 +409,7 @@ macro_rules! __impl_sqlx_sqlite {
         {
             fn encode_by_ref(
                 &self,
-                buf: &mut <$crate::__private::sqlx::Sqlite as $crate::__private::sqlx::Database>::ArgumentBuffer<'_>,
+                buf: &mut <$crate::__private::sqlx::Sqlite as $crate::__private::sqlx::Database>::ArgumentBuffer,
             ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError>
             {
                 <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Sqlite>>::encode_by_ref(

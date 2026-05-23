@@ -1,6 +1,6 @@
 [package]
 name = "kubetsu-sqlx"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
 
@@ -26,10 +26,10 @@ sqlite = ["sqlx/sqlite"]
 
 [dependencies]
 kubetsu = { version = "0.7", path = "../kubetsu" }
-sqlx = { version = "0.8", default-features = false, features = [] }
+sqlx = { version = "0.9", default-features = false, features = [] }
 
 [dev-dependencies]
-sqlx = { version = "0.8", features = ["runtime-tokio", "macros", "sqlite", "mysql", "postgres", "any"] }
+sqlx = { version = "0.9", features = ["runtime-tokio", "macros", "sqlite", "mysql", "postgres", "any"] }
 tokio = { version = "1", features = ["macros", "rt"] }
 testcontainers = { version = "0.27" }
 testcontainers-modules = { version = "0.15", features = ["postgres", "mysql"] }
