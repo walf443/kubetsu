@@ -32,5 +32,4 @@ sqlx = { version = "0.9", default-features = false, features = [] }
 sqlx = { version = "0.9", features = ["runtime-tokio", "macros", "sqlite", "mysql", "postgres", "any"] }
 tokio = { version = "1", features = ["macros", "rt"] }
 testcontainers = { version = "0.28" }
-testcontainers-modules = { version = "0.15", features = ["postgres", "mysql"] }
 dtor = { version = "1.0" }

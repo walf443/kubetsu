@@ -544,18 +544,29 @@ mod tests {
         use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};
         use sqlx::{FromRow, MySqlPool};
         use std::sync::Mutex;
-        use testcontainers::ContainerAsync;
+        use testcontainers::core::WaitFor;
         use testcontainers::runners::AsyncRunner;
-        use testcontainers_modules::mysql::Mysql;
+        use testcontainers::{ContainerAsync, GenericImage, ImageExt};
         use tokio::sync::OnceCell;
 
-        static MYSQL_CONTAINER: Mutex<Option<ContainerAsync<Mysql>>> = Mutex::new(None);
+        static MYSQL_CONTAINER: Mutex<Option<ContainerAsync<GenericImage>>> = Mutex::new(None);
         static MYSQL_POOL: OnceCell<MySqlPool> = OnceCell::const_new();
 
         async fn get_db_conn() -> Result<MySqlPool, sqlx::Error> {
             let pool = MYSQL_POOL
                 .get_or_init(|| async {
-                    let container = Mysql::default().start().await.unwrap();
+                    let container = GenericImage::new("mysql", "8.1")
+                        .with_wait_for(WaitFor::message_on_stderr(
+                            "X Plugin ready for connections. Bind-address",
+                        ))
+                        .with_wait_for(WaitFor::message_on_stderr(
+                            "/usr/sbin/mysqld: ready for connections.",
+                        ))
+                        .with_env_var("MYSQL_DATABASE", "test")
+                        .with_env_var("MYSQL_ALLOW_EMPTY_PASSWORD", "yes")
+                        .start()
+                        .await
+                        .unwrap();
                     let host_port = container.get_host_port_ipv4(3306).await.unwrap();
                     let connect_info = MySqlConnectOptions::new()
                         .host("127.0.0.1")
@@ -620,18 +631,31 @@ mod tests {
         use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
         use sqlx::{FromRow, PgPool};
         use std::sync::Mutex;
-        use testcontainers::ContainerAsync;
+        use testcontainers::core::WaitFor;
         use testcontainers::runners::AsyncRunner;
-        use testcontainers_modules::postgres::Postgres;
+        use testcontainers::{ContainerAsync, GenericImage, ImageExt};
         use tokio::sync::OnceCell;
 
-        static POSTGRES_CONTAINER: Mutex<Option<ContainerAsync<Postgres>>> = Mutex::new(None);
+        static POSTGRES_CONTAINER: Mutex<Option<ContainerAsync<GenericImage>>> = Mutex::new(None);
         static POSTGRES_POOL: OnceCell<PgPool> = OnceCell::const_new();
 
         async fn get_db_conn() -> Result<PgPool, sqlx::Error> {
             let pool = POSTGRES_POOL
                 .get_or_init(|| async {
-                    let container = Postgres::default().start().await.unwrap();
+                    let container = GenericImage::new("postgres", "11-alpine")
+                        .with_wait_for(WaitFor::message_on_stderr(
+                            "database system is ready to accept connections",
+                        ))
+                        .with_wait_for(WaitFor::message_on_stdout(
+                            "database system is ready to accept connections",
+                        ))
+                        .with_env_var("POSTGRES_DB", "postgres")
+                        .with_env_var("POSTGRES_USER", "postgres")
+                        .with_env_var("POSTGRES_PASSWORD", "postgres")
+                        .with_cmd(["-c", "fsync=off"])
+                        .start()
+                        .await
+                        .unwrap();
                     let host_port = container.get_host_port_ipv4(5432).await.unwrap();
                     let connect_info = PgConnectOptions::new()
                         .host("127.0.0.1")
