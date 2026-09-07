@@ -555,7 +555,7 @@ mod tests {
         async fn get_db_conn() -> Result<MySqlPool, sqlx::Error> {
             let pool = MYSQL_POOL
                 .get_or_init(|| async {
-                    let container = GenericImage::new("mysql", "8.1")
+                    let container = GenericImage::new("mysql", "8.4")
                         .with_wait_for(WaitFor::message_on_stderr(
                             "X Plugin ready for connections. Bind-address",
                         ))
@@ -642,7 +642,7 @@ mod tests {
         async fn get_db_conn() -> Result<PgPool, sqlx::Error> {
             let pool = POSTGRES_POOL
                 .get_or_init(|| async {
-                    let container = GenericImage::new("postgres", "11-alpine")
+                    let container = GenericImage::new("postgres", "15-alpine")
                         .with_wait_for(WaitFor::message_on_stderr(
                             "database system is ready to accept connections",
                         ))
