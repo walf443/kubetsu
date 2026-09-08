@@ -682,6 +682,13 @@ mod tests {
                 .unwrap();
 
             assert_eq!(row.id, id);
+
+            // Leave the connection as it was found, so a future test need not
+            // know to drop first.
+            sqlx::query("DROP TEMPORARY TABLE events")
+                .execute(&mut *tx)
+                .await
+                .unwrap();
         }
     }
 
