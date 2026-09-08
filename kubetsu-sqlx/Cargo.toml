@@ -29,7 +29,8 @@ kubetsu = { version = "0.8", path = "../kubetsu" }
 sqlx = { version = "0.9", default-features = false, features = [] }
 
 [dev-dependencies]
-sqlx = { version = "0.9", features = ["runtime-tokio", "macros", "sqlite", "mysql", "postgres", "any"] }
+sqlx = { version = "0.9", features = ["runtime-tokio", "macros", "sqlite", "mysql", "postgres", "any", "uuid"] }
 tokio = { version = "1", features = ["macros", "rt"] }
 testcontainers = { version = "0.28" }
 dtor = { version = "1.0" }
+uuid = { version = "1", features = ["v7"] }

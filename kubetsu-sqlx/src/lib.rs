@@ -454,6 +454,19 @@ mod tests {
     );
     crate::impl_sqlx!(MyId<T, U>);
 
+    // Generic form: `sqlx::Any` has no `Uuid` support, and the concrete form
+    // emits its `Any` impls unconditionally, so a concrete UUID ID does not
+    // compile while the `any` feature is on. The generic form's impls are each
+    // bounded on the inner type, so it simply skips `Any`.
+    struct Event;
+    type EventId = MyId<Event, uuid::Uuid>;
+
+    /// A v7 UUID at a fixed instant, so a test never depends on the wall clock.
+    #[allow(dead_code)]
+    fn v7_at(secs: u64) -> uuid::Uuid {
+        uuid::Uuid::new_v7(uuid::Timestamp::from_unix(uuid::NoContext, secs, 0))
+    }
+
     #[cfg(feature = "sqlite")]
     mod sqlite_tests {
         use super::*;
@@ -571,7 +584,8 @@ mod tests {
                     let connect_info = MySqlConnectOptions::new()
                         .host("127.0.0.1")
                         .port(host_port)
-                        .username("root");
+                        .username("root")
+                        .database("test");
                     let pool = MySqlPoolOptions::new()
                         .connect_with(connect_info)
                         .await
@@ -621,6 +635,37 @@ mod tests {
                 .unwrap();
 
             assert_eq!(got, 1);
+        }
+
+        #[derive(FromRow)]
+        struct UuidRow {
+            id: EventId,
+        }
+
+        #[tokio::test]
+        async fn test_uuid_round_trip() {
+            // MySQL has no native UUID type; sqlx maps `Uuid` to BINARY(16).
+            let conn = get_db_conn().await.unwrap();
+            let mut tx = conn.begin().await.unwrap();
+
+            sqlx::query("CREATE TEMPORARY TABLE events (id BINARY(16) PRIMARY KEY)")
+                .execute(&mut *tx)
+                .await
+                .unwrap();
+
+            let id = EventId::new(v7_at(1));
+            sqlx::query("INSERT INTO events (id) VALUES (?)")
+                .bind(&id)
+                .execute(&mut *tx)
+                .await
+                .unwrap();
+
+            let row: UuidRow = sqlx::query_as("SELECT id FROM events")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(row.id, id);
         }
     }
 
@@ -711,6 +756,37 @@ mod tests {
                 .unwrap();
 
             assert_eq!(got, 1);
+        }
+
+        #[derive(FromRow)]
+        struct UuidRow {
+            id: EventId,
+        }
+
+        #[tokio::test]
+        async fn test_uuid_round_trip() {
+            // PostgreSQL has a native `uuid` column type.
+            let conn = get_db_conn().await.unwrap();
+            let mut tx = conn.begin().await.unwrap();
+
+            sqlx::query("CREATE TEMPORARY TABLE events (id uuid PRIMARY KEY)")
+                .execute(&mut *tx)
+                .await
+                .unwrap();
+
+            let id = EventId::new(v7_at(1));
+            sqlx::query("INSERT INTO events (id) VALUES ($1)")
+                .bind(&id)
+                .execute(&mut *tx)
+                .await
+                .unwrap();
+
+            let row: UuidRow = sqlx::query_as("SELECT id FROM events")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+            assert_eq!(row.id, id);
         }
     }
 
