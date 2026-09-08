@@ -80,9 +80,11 @@ mod test;
 /// assert_eq!(map.into_values().collect::<Vec<_>>(), vec!["a", "b"]);
 /// ```
 ///
-/// Deriving `Ord` on the generic form does not work: the derive bounds every
-/// type parameter, including the phantom tag, which is typically a unit struct
-/// that does not implement `Ord`.
+/// Do not derive them on the generic form: the macro already supplies the
+/// implementations, so a derive collides with `error[E0119]`. Deriving was the
+/// only option before 0.8, at the cost of also bounding the phantom tag, which
+/// the macro's implementations do not do -- if you are upgrading from 0.7 and
+/// derived `PartialOrd`/`Ord` on a generic ID, remove the derive.
 #[macro_export]
 macro_rules! define_id {
     // Generic form: define_id!(pub struct MyId<T, U>;);

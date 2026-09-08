@@ -1,6 +1,6 @@
 [package]
 name = "kubetsu-sqlx"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.85"
 
@@ -25,7 +25,7 @@ postgres = ["sqlx/postgres"]
 sqlite = ["sqlx/sqlite"]
 
 [dependencies]
-kubetsu = { version = "0.7", path = "../kubetsu" }
+kubetsu = { version = "0.8", path = "../kubetsu" }
 sqlx = { version = "0.9", default-features = false, features = [] }
 
 [dev-dependencies]

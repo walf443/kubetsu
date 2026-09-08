@@ -41,7 +41,9 @@ assert_eq!(UserId::new(1), user_id);
 
 The generated type implements `Debug`, `PartialEq`, `Eq`, `Hash`, `Clone`, and `From<InnerType>`.
 It also implements `PartialOrd` and `Ord` when the inner value type does, so an ID can be
-sorted or used as a `BTreeMap` key.
+sorted or used as a `BTreeMap` key. Do not derive those two on the generic form: the macro
+supplies them, so a derive collides with `error[E0119]`. If you derived them on a generic ID
+under 0.7, remove the derive when upgrading to 0.8.
 
 You can also generate a concrete type with a fixed inner type:
 
