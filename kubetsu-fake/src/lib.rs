@@ -28,8 +28,10 @@ pub mod __private {
 /// assert!((1000..2000).contains(user.id.inner()));
 /// ```
 ///
-/// Because the implementation covers every config, a hand-written
-/// `Dummy<SomeConfig>` for the same ID type collides with `error[E0119]`.
+/// Because the implementation covers every config the inner type supports, a
+/// hand-written `Dummy<SomeConfig>` for the same ID type collides with
+/// `error[E0119]` when the inner type also implements that config. One written
+/// for a config of your own still compiles, since the macro cannot cover it.
 ///
 /// # Concrete form
 ///
@@ -126,6 +128,10 @@ mod tests {
     struct Item;
     type MyItemId = MyId<Item, String>;
 
+    /// Characters an item ID is made of, so a generated value looks like an
+    /// identifier rather than arbitrary text.
+    const ITEM_CHARSET: &[u8] = b"ABCDEF0123456789";
+
     #[test]
     fn test_fake_concrete() {
         let _id: UserId = Faker.fake();
@@ -181,13 +187,10 @@ mod tests {
 
     #[test]
     fn test_forwards_a_named_faker() {
-        use fake::faker::name::en::Name;
+        use fake::faker::internet::en::Username;
 
-        let id: ItemId = Name().fake();
+        let id: MyItemId = Username().fake();
         assert!(!id.inner().is_empty());
-
-        let generic: MyItemId = Name().fake();
-        assert!(!generic.inner().is_empty());
     }
 
     #[test]
@@ -196,12 +199,11 @@ mod tests {
 
         // A charset-and-length config, so the assertion can check that the
         // config was honoured rather than just that something was produced.
-        const CHARSET: &[u8] = b"ABCDEF0123456789";
-        let faker = StringFaker::with(CHARSET.to_vec(), 8..9);
+        let faker = StringFaker::with(ITEM_CHARSET.to_vec(), 8..9);
 
-        let id: ItemId = faker.fake();
+        let id: MyItemId = faker.fake();
         assert_eq!(id.inner().len(), 8);
-        assert!(id.inner().bytes().all(|b| CHARSET.contains(&b)));
+        assert!(id.inner().bytes().all(|b| ITEM_CHARSET.contains(&b)));
     }
 
     #[test]
@@ -213,25 +215,25 @@ mod tests {
     #[test]
     fn test_forwards_config_through_derive() {
         use fake::Dummy;
-        use fake::faker::name::en::Name;
+        use fake::StringFaker;
 
-        // Different configs on different fields, and an ID left on `Faker`,
-        // all in one struct.
+        // Three config shapes on one struct -- a std range, a configured
+        // faker, and a field left on `Faker` -- across both macro forms.
         #[derive(Dummy)]
-        struct User {
+        struct Order {
             #[dummy(faker = "1000..2000")]
-            id: UserId,
+            user_id: UserId,
             #[dummy(faker = "1000..2000")]
-            generic_id: MyUserId,
-            #[dummy(faker = "Name()")]
-            name: ItemId,
+            generic_user_id: MyUserId,
+            #[dummy(faker = "StringFaker::with(ITEM_CHARSET.to_vec(), 8..9)")]
+            item_id: MyItemId,
             default_id: UserId,
         }
 
-        let user: User = Faker.fake();
-        assert!((1000..2000).contains(user.id.inner()));
-        assert!((1000..2000).contains(user.generic_id.inner()));
-        assert!(!user.name.inner().is_empty());
-        let _ = user.default_id;
+        let order: Order = Faker.fake();
+        assert!((1000..2000).contains(order.user_id.inner()));
+        assert!((1000..2000).contains(order.generic_user_id.inner()));
+        assert_eq!(order.item_id.inner().len(), 8);
+        let _ = order.default_id;
     }
 }

@@ -44,8 +44,9 @@ let user: User = Faker.fake();
 assert!((1000..2000).contains(user.id.inner()));
 ```
 
-Because the implementation covers every config, a hand-written `Dummy<SomeConfig>` for the
-same ID type collides with `error[E0119]`.
+Because the implementation covers every config the inner type supports, a hand-written
+`Dummy<SomeConfig>` for the same ID type collides with `error[E0119]` when the inner type
+also implements that config. See [UPGRADE.md](UPGRADE.md) if you are moving from 0.1.
 
 ## Install
 

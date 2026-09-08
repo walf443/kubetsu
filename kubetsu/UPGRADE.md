@@ -26,6 +26,8 @@ kubetsu-sqlx = { version = "0.3", features = ["sqlite"] }
 
 The adapter crates are bumped together because they expose `kubetsu` through the macros they generate. Mixing an older adapter with kubetsu 0.8 resolves two different `KubetsuId` traits.
 
+`kubetsu-fake` 0.2 also carries a breaking change of its own -- `impl_fake!` now forwards every fake config -- so see [its upgrade guide](../kubetsu-fake/UPGRADE.md) as well.
+
 ### Breaking Change: `PartialOrd` and `Ord` are generated for the generic form
 
 The generic form now implements `PartialOrd` and `Ord`, each conditional on the inner value type, so an ID can be sorted or used as a `BTreeMap` key.
