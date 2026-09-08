@@ -70,6 +70,17 @@ mod test;
 /// implementations is conditional on the inner type: `MyId<T, f64>` simply gets
 /// `PartialEq` without `Eq`.
 ///
+/// ```rust,compile_fail
+/// kubetsu::define_id!(pub struct MyId<T, U>;);
+///
+/// struct Weight;
+///
+/// fn requires_eq<T: Eq>() {}
+///
+/// // `f64` is `PartialEq` but not `Eq`, so neither is the ID.
+/// requires_eq::<MyId<Weight, f64>>();
+/// ```
+///
 /// ## Ordering
 ///
 /// The generic form additionally implements `PartialOrd` and `Ord`, each

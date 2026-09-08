@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 // --- Concrete form ---
 
@@ -63,6 +63,21 @@ fn test_hash() {
 }
 
 #[test]
+fn test_eq_is_reflexive() {
+    // The concrete form claims `Eq` unconditionally and asserts the inner type
+    // implements it, so equality must be reflexive and a `HashSet` must
+    // deduplicate. An inner type that only implements `PartialEq` used to slip
+    // through and break both.
+    let id = UserId::new(1);
+    assert_eq!(id, id.clone());
+
+    let mut set = HashSet::new();
+    set.insert(id.clone());
+    set.insert(id.clone());
+    assert_eq!(set.len(), 1);
+}
+
+#[test]
 fn test_string_id() {
     let id = ItemId::new("abc".to_string());
     assert_eq!(id.inner(), "abc");
@@ -116,6 +131,16 @@ mod generic_tests {
         let id = MyUserId::new(1);
         map.insert(id.clone(), "user");
         assert_eq!(map.get(&id), Some(&"user"));
+    }
+
+    #[test]
+    fn test_eq_is_conditional() {
+        // The positive half: an `Eq` inner type yields an `Eq` ID. The negative
+        // half -- that a `PartialEq`-only inner type does not -- is a
+        // `compile_fail` doctest on `define_id!`, since absence of a trait
+        // cannot be asserted at runtime.
+        fn requires_eq<T: Eq>() {}
+        requires_eq::<MyUserId>();
     }
 
     #[test]
