@@ -237,19 +237,56 @@ mod tests {
         }
 
         #[test]
-        fn test_fake_generates_an_id() {
+        fn test_fake_with_faker_gives_an_arbitrary_uuid() {
             use fake::{Fake, Faker};
 
-            // `impl_fake!` implements `Dummy<Faker>` only, and fake's
-            // `Dummy<Faker> for Uuid` fills all 128 bits at random -- so this
-            // yields an arbitrary UUID, not a v7, and not even a value with the
-            // version and variant bits set. `UUIDv7.fake::<EventId>()` does not
-            // compile, because that config is not forwarded.
+            // fake's `Dummy<Faker> for Uuid` fills all 128 bits at random, so
+            // the default config yields an arbitrary UUID rather than any
+            // particular version -- it does not even set the version and
+            // variant bits. Ask for a version explicitly, as below.
             let id: EventId = Faker.fake();
             let generic: MyEventId = Faker.fake();
 
             assert_ne!(id, Faker.fake::<EventId>());
             assert_ne!(generic, Faker.fake::<MyEventId>());
+        }
+
+        #[test]
+        fn test_fake_generates_a_v7() {
+            use fake::Fake;
+            use fake::uuid::UUIDv7;
+
+            // `impl_fake!` forwards the config to the inner type, so fake's
+            // UUID version configs reach an ID directly.
+            //
+            // What reaches it is a structurally valid v7, not a chronological
+            // one: fake draws the timestamp at random rather than from the
+            // clock, so generated values do not sort into generation order the
+            // way real v7s do. Build them from explicit timestamps, as the
+            // ordering tests above do, when order is what matters.
+            let id: EventId = UUIDv7.fake();
+            assert_eq!(id.inner().get_version_num(), 7);
+
+            let generic: MyEventId = UUIDv7.fake();
+            assert_eq!(generic.inner().get_version_num(), 7);
+        }
+
+        #[test]
+        fn test_fake_generates_a_v7_through_derive() {
+            use fake::uuid::UUIDv7;
+            use fake::{Dummy, Fake, Faker};
+
+            #[derive(Dummy)]
+            struct Event {
+                #[dummy(faker = "UUIDv7")]
+                id: EventId,
+                #[dummy(faker = "UUIDv7")]
+                generic_id: MyEventId,
+            }
+
+            let event: Event = Faker.fake();
+            assert_eq!(event.id.inner().get_version_num(), 7);
+            assert_eq!(event.generic_id.inner().get_version_num(), 7);
         }
 
         #[tokio::test]
