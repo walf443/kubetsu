@@ -652,18 +652,19 @@ mod tests {
         #[tokio::test]
         async fn test_uuid_round_trip() {
             // MySQL has no native UUID type; sqlx maps `Uuid` to BINARY(16).
-            let conn = get_db_conn().await.unwrap();
-            let mut tx = conn.begin().await.unwrap();
+            let pool = get_db_conn().await.unwrap();
 
             // Unlike PostgreSQL, MySQL does not roll back CREATE TEMPORARY
-            // TABLE, so the table outlives this transaction on whichever
-            // pooled connection ran it. Drop it first, or the next test to
-            // want an `events` table fails -- and only when it happens to draw
-            // that connection.
-            sqlx::query("DROP TEMPORARY TABLE IF EXISTS events")
-                .execute(&mut *tx)
-                .await
-                .unwrap();
+            // TABLE, so the table would outlive this test on whichever pooled
+            // connection ran it, and the next test to want an `events` table
+            // would fail -- only when it happened to draw that connection.
+            // Closing the connection instead of returning it to the pool takes
+            // the table with it, on the panicking path as well.
+            use sqlx::Acquire;
+            let mut conn = pool.acquire().await.unwrap();
+            conn.close_on_drop();
+            let mut tx = conn.begin().await.unwrap();
+
             sqlx::query("CREATE TEMPORARY TABLE events (id BINARY(16) PRIMARY KEY)")
                 .execute(&mut *tx)
                 .await
@@ -682,13 +683,6 @@ mod tests {
                 .unwrap();
 
             assert_eq!(row.id, id);
-
-            // Leave the connection as it was found, so a future test need not
-            // know to drop first.
-            sqlx::query("DROP TEMPORARY TABLE events")
-                .execute(&mut *tx)
-                .await
-                .unwrap();
         }
     }
 
