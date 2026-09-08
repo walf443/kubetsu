@@ -150,6 +150,26 @@ mod tests {
     }
 
     #[test]
+    fn test_serialize_string_as_map_key() {
+        use std::collections::HashMap;
+
+        let mut map = HashMap::new();
+        map.insert(ItemId::new("abc".to_string()), 1);
+
+        let json = serde_json::to_string(&map).unwrap();
+        assert_eq!(json, "{\"abc\":1}");
+    }
+
+    #[test]
+    fn test_deserialize_string_as_map_key() {
+        use std::collections::HashMap;
+
+        let map: HashMap<ItemId, i32> = serde_json::from_str("{\"abc\":1}").unwrap();
+
+        assert_eq!(map.get(&ItemId::new("abc".to_string())), Some(&1));
+    }
+
+    #[test]
     fn test_serialize_generic() {
         let id = MyUserId::new(42);
         let json = serde_json::to_string(&id).unwrap();
