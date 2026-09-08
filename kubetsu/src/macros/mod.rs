@@ -61,6 +61,23 @@ mod test;
 /// assert_eq!(map.into_values().collect::<Vec<_>>(), vec!["a", "b"]);
 /// ```
 ///
+/// Ordering does not cross type tags, the same way equality does not. `Ord` and
+/// `PartialOrd` compare `Self` against `Self`, so two IDs that differ only in
+/// their phantom tag are still different types:
+///
+/// ```rust,compile_fail
+/// kubetsu::define_id!(pub struct MyId<T, U>;);
+///
+/// struct User;
+/// struct Item;
+///
+/// let user_id = MyId::<User, i64>::new(1);
+/// let item_id = MyId::<Item, i64>::new(1);
+/// let _ = user_id < item_id;
+/// // error[E0308]: mismatched types
+/// //     expected `MyId<User, i64>`, found `MyId<Item, i64>`
+/// ```
+///
 /// The concrete form does not, because a fixed inner type leaves nothing to
 /// make the implementation conditional on: an unconditional `Ord` would force
 /// every inner type to be `Ord`. Derive it instead when you need it, which
