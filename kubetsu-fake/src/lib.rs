@@ -28,10 +28,46 @@ pub mod __private {
 /// assert!((1000..2000).contains(user.id.inner()));
 /// ```
 ///
-/// Because the implementation covers every config the inner type supports, a
-/// hand-written `Dummy<SomeConfig>` for the same ID type collides with
-/// `error[E0119]` when the inner type also implements that config. One written
-/// for a config of your own still compiles, since the macro cannot cover it.
+/// Because the implementation covers every config, a hand-written
+/// `Dummy<SomeConfig>` for the same ID type collides with `error[E0119]` unless
+/// `SomeConfig` is declared in your own crate. A config from another crate
+/// collides even when the inner type does not implement it, since rustc must
+/// assume a future release could add it:
+///
+/// ```rust,compile_fail
+/// use fake::{Dummy, RngExt};
+///
+/// kubetsu::define_id!(pub struct UserId(i64););
+/// kubetsu_fake::impl_fake!(UserId(i64));
+///
+/// // `i64: Dummy<Range<i32>>` does not exist, but `Range` is not ours to
+/// // reason about, so this still conflicts.
+/// impl Dummy<std::ops::Range<i32>> for UserId {
+///     fn dummy_with_rng<R: RngExt + ?Sized>(_: &std::ops::Range<i32>, _: &mut R) -> Self {
+///         Self::new(1)
+///     }
+/// }
+/// ```
+///
+/// A config declared in your own crate does not collide, which is where logic
+/// of your own belongs:
+///
+/// ```rust
+/// use fake::{Dummy, Fake, RngExt};
+///
+/// kubetsu::define_id!(pub struct UserId(i64););
+/// kubetsu_fake::impl_fake!(UserId(i64));
+///
+/// pub struct FirstUser;
+/// impl Dummy<FirstUser> for UserId {
+///     fn dummy_with_rng<R: RngExt + ?Sized>(_: &FirstUser, _: &mut R) -> Self {
+///         Self::new(1)
+///     }
+/// }
+///
+/// let id: UserId = FirstUser.fake();
+/// assert_eq!(*id.inner(), 1);
+/// ```
 ///
 /// # Concrete form
 ///

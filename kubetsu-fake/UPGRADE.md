@@ -30,14 +30,16 @@ struct User {
 
 Nothing to do unless you worked around the old limitation with your own implementation.
 
-A hand-written implementation collides only when the inner type already implements that same config, since that is when the macro's implementation now applies too:
+A hand-written implementation collides unless its config type is defined in your own crate. That is stricter than it may look: for a config from anywhere else -- including `std` types such as `Range<i32>` -- rustc has to assume the inner type could gain that `Dummy` in a future release, so it treats the macro's implementation as overlapping even where the inner type does not implement the config today.
 
 ```text
-error[E0119]: conflicting implementations of trait `Dummy<UUIDv7>` for type `EventId`
+error[E0119]: conflicting implementations of trait `Dummy<Range<i32>>` for type `UserId`
+note: upstream crates may add a new impl of trait `fake::Dummy<Range<i32>>`
+      for type `i64` in future versions
 ```
 
-One written for a config of your own -- a marker type the inner type does not implement `Dummy` for -- still compiles and still applies, because the macro's implementation cannot cover it.
+A config type you declare yourself escapes this, because the orphan rule lets rustc rule out such an impl ever appearing.
 
-Where it does collide, delete yours: the macro forwards that config on its own. Check what the deleted implementation did first, though. Deleting it swaps your logic for the inner type's, and that is not a compile error -- if yours returned a fixed value so fixtures stayed reproducible, you will now get whatever the inner type generates for that config. Move such logic to a config type of your own, which does not collide.
+Where it does collide, delete yours: the macro forwards that config on its own. Check what the deleted implementation did first, though. Deleting it swaps your logic for the inner type's, and that is not a compile error -- if yours returned a fixed value so fixtures stayed reproducible, you will now get whatever the inner type generates for that config. Move such logic to a config type declared in your own crate, which does not collide.
 
 If instead you hand-wrote `Dummy<Faker>` and deliberately did not call `impl_fake!` for that type, nothing changes.
