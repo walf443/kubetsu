@@ -64,10 +64,11 @@ fn test_hash() {
 
 #[test]
 fn test_eq_is_reflexive() {
-    // The concrete form claims `Eq` unconditionally and asserts the inner type
-    // implements it, so equality must be reflexive and a `HashSet` must
-    // deduplicate. An inner type that only implements `PartialEq` used to slip
-    // through and break both.
+    // Documents what `Eq` buys an ID: reflexive equality, and deduplication in
+    // a `HashSet`. This is not the regression guard for the inner-type
+    // assertion -- `UserId`'s inner type is `i64`, which is always `Eq`, so
+    // this passes with or without it. The guard is the `compile_fail` doctest
+    // on `define_id!`.
     let id = UserId::new(1);
     assert_eq!(id, id.clone());
 
@@ -135,10 +136,10 @@ mod generic_tests {
 
     #[test]
     fn test_eq_is_conditional() {
-        // The positive half: an `Eq` inner type yields an `Eq` ID. The negative
-        // half -- that a `PartialEq`-only inner type does not -- is a
-        // `compile_fail` doctest on `define_id!`, since absence of a trait
-        // cannot be asserted at runtime.
+        // The positive half only: an `Eq` inner type yields an `Eq` ID. This
+        // passes even if the bound were weakened, so the regression guard is
+        // the negative half -- a `compile_fail` doctest on `define_id!`, since
+        // absence of a trait cannot be asserted at runtime.
         fn requires_eq<T: Eq>() {}
         requires_eq::<MyUserId>();
     }

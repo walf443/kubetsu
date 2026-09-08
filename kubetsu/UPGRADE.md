@@ -83,7 +83,18 @@ error[E0277]: the trait bound `Weight: Eq` is not satisfied
 help: the trait `Eq` is not implemented for `Weight`
 ```
 
-Only `Eq` was affected. Every other core trait the concrete form generates is checked through its own method body.
+### Breaking Change: the concrete form resolves its core traits unambiguously
+
+The concrete form used to call the inner type's trait methods without qualifying them (`self.inner().fmt(f)`, `.eq(..)`, `.hash(..)`, `.clone()`). Method calls in a macro are resolved against the traits in scope where the macro is invoked, not against the trait being implemented, which had two consequences:
+
+- `define_id!`'s concrete form failed to compile for any caller with `use std::fmt::Display;` in the same module, including a plain `String` or `i64` inner type, with `error[E0034]: multiple applicable items in scope`.
+- An inner type implementing `Display` but not `Debug` received a `Debug` implementation that printed its `Display` output -- the same kind of false claim as the `Eq` case above.
+
+The generated bodies now use fully qualified paths, so both are gone. The requirements listed above are enforced rather than assumed.
+
+### Migration
+
+If an inner type relied on the accidental delegation -- it implements `Display` but not `Debug`, and the ID's `{:?}` output was its `Display` text -- implement `Debug` for it. No change is needed otherwise; callers previously blocked by `E0034` now compile.
 
 ### Migration
 
