@@ -97,11 +97,12 @@ mod test;
 /// assert_eq!(map.into_values().collect::<Vec<_>>(), vec!["a", "b"]);
 /// ```
 ///
-/// Do not derive them on the generic form: the macro already supplies the
-/// implementations, so a derive collides with `error[E0119]`. Deriving was the
-/// only option before 0.8, at the cost of also bounding the phantom tag, which
-/// the macro's implementations do not do -- if you are upgrading from 0.7 and
-/// derived `PartialOrd`/`Ord` on a generic ID, remove the derive.
+/// Do not supply your own `PartialOrd`/`Ord` for the generic form: the macro
+/// already implements them, so any derive or hand-written implementation
+/// collides with `error[E0119]`, including one written for a single
+/// instantiation such as `MyId<User, i64>`. Upgrading from 0.7 means deleting
+/// a derive; a bespoke ordering has to move to the call site (`sort_by`) or
+/// onto a wrapper type of your own. See `UPGRADE.md`.
 #[macro_export]
 macro_rules! define_id {
     // Generic form: define_id!(pub struct MyId<T, U>;);
