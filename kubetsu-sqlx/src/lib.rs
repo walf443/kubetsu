@@ -454,18 +454,25 @@ mod tests {
     );
     crate::impl_sqlx!(MyId<T, U>);
 
-    // Generic form: `sqlx::Any` has no `Uuid` support, and the concrete form
-    // emits its `Any` impls unconditionally, so a concrete UUID ID does not
-    // compile while the `any` feature is on. The generic form's impls are each
-    // bounded on the inner type, so it simply skips `Any`.
-    struct Event;
-    type EventId = MyId<Event, uuid::Uuid>;
+    // Only the driver modules that have a UUID column type use these.
+    #[cfg(any(feature = "mysql", feature = "postgres"))]
+    mod uuid_support {
+        use super::MyId;
 
-    /// A v7 UUID at a fixed instant, so a test never depends on the wall clock.
-    #[allow(dead_code)]
-    fn v7_at(secs: u64) -> uuid::Uuid {
-        uuid::Uuid::new_v7(uuid::Timestamp::from_unix(uuid::NoContext, secs, 0))
+        // Generic form: `sqlx::Any` has no `Uuid` support, and the concrete form
+        // emits its `Any` impls unconditionally, so a concrete UUID ID does not
+        // compile while the `any` feature is on. The generic form's impls are each
+        // bounded on the inner type, so it simply skips `Any`.
+        pub struct Event;
+        pub type EventId = MyId<Event, uuid::Uuid>;
+
+        /// A v7 UUID at a fixed instant, so a test never depends on the wall clock.
+        pub fn v7_at(secs: u64) -> uuid::Uuid {
+            uuid::Uuid::new_v7(uuid::Timestamp::from_unix(uuid::NoContext, secs, 0))
+        }
     }
+    #[cfg(any(feature = "mysql", feature = "postgres"))]
+    use uuid_support::{EventId, v7_at};
 
     #[cfg(feature = "sqlite")]
     mod sqlite_tests {
