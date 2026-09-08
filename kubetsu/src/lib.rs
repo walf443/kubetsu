@@ -1,9 +1,10 @@
 #![cfg_attr(not(test), no_std)]
+#![doc = include_str!("../README.md")]
 
 mod macros;
 
 mod id;
-#[doc = include_str!("../README.md")]
+/// A ready-made generic ID type, equivalent to `define_id!(pub struct Id<T, U>;)`.
 #[deprecated(
     since = "0.6.0",
     note = "Use `kubetsu::define_id!` to define your own ID type instead."
