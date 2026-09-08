@@ -348,4 +348,7 @@ mod tests {
             );
         }
     }
+
+    /// ULID as an ID inner type. See `tests/ulid_tests.rs`.
+    mod ulid_tests;
 }

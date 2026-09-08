@@ -14,3 +14,4 @@ fake = { version = "5", features = ["derive", "uuid"] }
 sqlx = { version = "0.9", features = ["runtime-tokio", "macros", "sqlite", "uuid"] }
 tokio = { version = "1", features = ["macros", "rt"] }
 uuid = { version = "1", features = ["v7", "serde"] }
+ulid = { version = "3", features = ["serde"] }
