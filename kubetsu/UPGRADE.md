@@ -113,28 +113,6 @@ The generated bodies now use fully qualified paths, so the inner type must genui
 
 If an inner type relied on the accidental delegation -- it implements `Display` but not `Debug`, and the ID's `{:?}` output was its `Display` text -- implement `Debug` for it. Nothing else changes; callers previously blocked by `E0034` now compile.
 
-### Breaking Change: `kubetsu-fake` forwards every fake config
-
-`impl_fake!` used to implement `fake::Dummy<Faker>` only, so an ID accepted no config other than `Faker`: `#[dummy(faker = "1000..2000")]` on an ID field did not compile, and neither did `UUIDv7.fake::<EventId>()`. It is now generic over the config type and forwards to the inner type, so an ID accepts everything its inner type does.
-
-```rust
-#[derive(Dummy)]
-struct User {
-    #[dummy(faker = "1000..2000")]
-    id: UserId,
-}
-```
-
-#### Migration
-
-Nothing to do unless you worked around the old limitation with your own implementation. Because the macro now covers every config, a hand-written one collides:
-
-```text
-error[E0119]: conflicting implementations of trait `Dummy<UUIDv7>` for type `EventId`
-```
-
-Delete it; the macro forwards that config on its own. If instead you hand-wrote `Dummy<Faker>` and deliberately did not call `impl_fake!` for that type, nothing changes.
-
 ## 0.6.x → 0.7.0
 
 ### Breaking Change: serde / fake / sqlx support moved to separate crates
