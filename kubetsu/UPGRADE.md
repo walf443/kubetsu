@@ -121,9 +121,7 @@ In v0.7.0, serde / fake / sqlx support previously provided via feature flags on 
 
 This allows each adapter crate to release independently, so you can update library versions (e.g., `fake`, `sqlx`) without waiting for a new kubetsu release.
 
-### Migration
-
-#### 1. Update your Cargo.toml dependencies
+#### Migration: update your Cargo.toml dependencies
 
 **Before:**
 ```toml
@@ -149,7 +147,7 @@ Note that `kubetsu-sqlx` feature names no longer have the `sqlx-` prefix:
 | `sqlx-postgres` | `postgres` |
 | `sqlx-sqlite` | `sqlite` |
 
-#### 2. Add adapter macros after `define_id!`
+#### Migration: add adapter macros after `define_id!`
 
 `define_id!` still generates core traits (Debug, PartialEq, Eq, Hash, Clone, From), but serde / fake / sqlx impls are no longer generated automatically.
 
@@ -182,6 +180,6 @@ kubetsu_fake::impl_fake!(MyId<T, U>);
 kubetsu_sqlx::impl_sqlx!(MyId<T, U>);
 ```
 
-#### 3. If you are using the deprecated `Id` type
+#### Migration: if you are using the deprecated `Id` type
 
 `kubetsu::Id` was deprecated in 0.6.0. It is still available in v0.7.0 but no longer has serde / fake / sqlx support. Migrating to `define_id!` is recommended.
