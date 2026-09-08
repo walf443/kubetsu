@@ -103,12 +103,12 @@ mod test;
 /// ```rust,compile_fail
 /// kubetsu::define_id!(pub struct MyId<T, U>;);
 ///
-/// struct Weight;
+/// struct WeightTag;
 ///
 /// fn requires_eq<T: Eq>() {}
 ///
 /// // `f64` is `PartialEq` but not `Eq`, so neither is the ID.
-/// requires_eq::<MyId<Weight, f64>>();
+/// requires_eq::<MyId<WeightTag, f64>>();
 /// ```
 ///
 /// ## Ordering
