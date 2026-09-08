@@ -40,6 +40,8 @@ assert_eq!(UserId::new(1), user_id);
 ```
 
 The generated type implements `Debug`, `PartialEq`, `Eq`, `Hash`, `Clone`, and `From<InnerType>`.
+It also implements `PartialOrd` and `Ord` when the inner value type does, so an ID can be
+sorted or used as a `BTreeMap` key.
 
 You can also generate a concrete type with a fixed inner type:
 
@@ -48,6 +50,16 @@ kubetsu::define_id!(pub struct UserId(i32););
 
 let user_id = UserId::new(1);
 assert_eq!(&1, user_id.inner());
+```
+
+The concrete form does not implement `PartialOrd` and `Ord`, because a fixed inner type
+leaves nothing to make the implementation conditional on. Derive them when you need them:
+
+```rust
+kubetsu::define_id!(
+    #[derive(PartialOrd, Ord)]
+    pub struct UserId(i32);
+);
 ```
 
 ## serde support

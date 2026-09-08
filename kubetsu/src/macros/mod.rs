@@ -40,6 +40,49 @@ mod test;
 /// - `new()` and `inner()` methods
 /// - `Debug`, `PartialEq`, `Eq`, `Hash`, `Clone`
 /// - `From<InnerType>`
+///
+/// ## Ordering
+///
+/// The generic form additionally implements `PartialOrd` and `Ord`, each
+/// conditionally on the inner value type, so an ID can be used as a
+/// `BTreeMap` key or sorted:
+///
+/// ```rust
+/// use std::collections::BTreeMap;
+///
+/// kubetsu::define_id!(pub struct MyId<T, U>;);
+///
+/// struct User;
+/// type UserId = MyId<User, i64>;
+///
+/// let mut map = BTreeMap::new();
+/// map.insert(UserId::new(2), "b");
+/// map.insert(UserId::new(1), "a");
+/// assert_eq!(map.into_values().collect::<Vec<_>>(), vec!["a", "b"]);
+/// ```
+///
+/// The concrete form does not, because a fixed inner type leaves nothing to
+/// make the implementation conditional on: an unconditional `Ord` would force
+/// every inner type to be `Ord`. Derive it instead when you need it, which
+/// works because the macro forwards attributes to the generated struct:
+///
+/// ```rust
+/// use std::collections::BTreeMap;
+///
+/// kubetsu::define_id!(
+///     #[derive(PartialOrd, Ord)]
+///     pub struct UserId(i64);
+/// );
+///
+/// let mut map = BTreeMap::new();
+/// map.insert(UserId::new(2), "b");
+/// map.insert(UserId::new(1), "a");
+/// assert_eq!(map.into_values().collect::<Vec<_>>(), vec!["a", "b"]);
+/// ```
+///
+/// Deriving `Ord` on the generic form does not work: the derive bounds every
+/// type parameter, including the phantom tag, which is typically a unit struct
+/// that does not implement `Ord`.
 #[macro_export]
 macro_rules! define_id {
     // Generic form: define_id!(pub struct MyId<T, U>;);
@@ -124,7 +167,7 @@ macro_rules! define_id {
 // without notice.
 // =============================================================================
 
-// Core traits: Debug, PartialEq, Eq, Hash, Clone, From
+// Core traits: Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, From
 
 #[doc(hidden)]
 #[macro_export]
@@ -178,6 +221,20 @@ macro_rules! __impl_id_core_traits {
         }
 
         impl<$($gen)+> ::core::cmp::Eq for $name where $inner: ::core::cmp::Eq {}
+
+        /// you can compare if value implement [PartialOrd].
+        impl<$($gen)+> ::core::cmp::PartialOrd for $name where $inner: ::core::cmp::PartialOrd {
+            fn partial_cmp(&self, other: &Self) -> ::core::option::Option<::core::cmp::Ordering> {
+                self.inner().partial_cmp(other.inner())
+            }
+        }
+
+        /// you can use as ordered key (e.g. `BTreeMap`) if value implement [Ord].
+        impl<$($gen)+> ::core::cmp::Ord for $name where $inner: ::core::cmp::Ord {
+            fn cmp(&self, other: &Self) -> ::core::cmp::Ordering {
+                self.inner().cmp(other.inner())
+            }
+        }
 
         /// you can use as hash key if value implement [Hash].
         impl<$($gen)+> ::core::hash::Hash for $name where $inner: ::core::cmp::PartialEq + ::core::hash::Hash {
