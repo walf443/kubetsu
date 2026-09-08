@@ -28,11 +28,11 @@ pub mod __private {
 /// assert!((1000..2000).contains(user.id.inner()));
 /// ```
 ///
-/// Because the implementation covers every config, a hand-written
-/// `Dummy<SomeConfig>` for the same ID type collides with `error[E0119]` unless
-/// `SomeConfig` is declared in your own crate. A config from another crate
-/// collides even when the inner type does not implement it, since rustc must
-/// assume a future release could add it:
+/// Because the implementation applies to whatever config the inner type
+/// accepts, a hand-written `Dummy<SomeConfig>` for the same ID type collides
+/// with `error[E0119]`. A config from another crate conflicts even when the
+/// inner type does not implement it, since rustc must assume a future release
+/// could add the impl:
 ///
 /// ```rust,compile_fail
 /// use fake::{Dummy, RngExt};
@@ -49,8 +49,9 @@ pub mod __private {
 /// }
 /// ```
 ///
-/// A config declared in your own crate does not collide, which is where logic
-/// of your own belongs:
+/// The one case that compiles is a config declared in your own crate for which
+/// the inner type has no `Dummy` -- the orphan rule stops other crates adding
+/// one, though it does not stop you. That is where logic of your own belongs:
 ///
 /// ```rust
 /// use fake::{Dummy, Fake, RngExt};
@@ -67,6 +68,26 @@ pub mod __private {
 ///
 /// let id: UserId = FirstUser.fake();
 /// assert_eq!(*id.inner(), 1);
+/// ```
+///
+/// Implementing `Dummy<YourConfig>` for the inner type as well brings the
+/// conflict back, since the macro's implementation then applies too:
+///
+/// ```rust,compile_fail
+/// use fake::{Dummy, RngExt};
+///
+/// kubetsu::define_id!(pub struct UserId(i64););
+/// kubetsu_fake::impl_fake!(UserId(i64));
+///
+/// pub struct FirstUser;
+/// impl Dummy<FirstUser> for i64 {
+///     fn dummy_with_rng<R: RngExt + ?Sized>(_: &FirstUser, _: &mut R) -> Self { 1 }
+/// }
+/// impl Dummy<FirstUser> for UserId {
+///     fn dummy_with_rng<R: RngExt + ?Sized>(_: &FirstUser, _: &mut R) -> Self {
+///         Self::new(1)
+///     }
+/// }
 /// ```
 ///
 /// # Concrete form

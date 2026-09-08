@@ -44,10 +44,11 @@ let user: User = Faker.fake();
 assert!((1000..2000).contains(user.id.inner()));
 ```
 
-Because the implementation covers every config, a hand-written `Dummy<SomeConfig>` for the
-same ID type collides with `error[E0119]` unless `SomeConfig` is declared in your own crate.
-A config from another crate collides even when the inner type does not implement it, since
-rustc must assume it could. See [UPGRADE.md](UPGRADE.md) if you are moving from 0.1.
+Because the implementation applies to whatever config the inner type accepts, a hand-written
+`Dummy<SomeConfig>` for the same ID type collides with `error[E0119]`. The one case that
+compiles is a `SomeConfig` declared in your own crate for which the inner type has no
+`Dummy`: a config from another crate conflicts even then, since rustc must assume a future
+release could add the impl. See [UPGRADE.md](UPGRADE.md) if you are moving from 0.1.
 
 ## Install
 
