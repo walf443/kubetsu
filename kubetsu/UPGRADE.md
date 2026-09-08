@@ -74,6 +74,34 @@ ids.sort_by(|a, b| b.cmp(a));
 
 Alternatively, wrap the ID in a type of your own and implement the ordering there.
 
+### Breaking Change: the concrete form now requires its inner type to implement `Eq`
+
+`define_id!`'s concrete form implements `Eq` unconditionally. `Eq` has no methods, so it was claimed even for an inner type that implements only `PartialEq`. The resulting ID advertised `Eq` while reporting `a == a` as `false`, which puts duplicate entries in a `HashSet`. The requirement is now asserted rather than assumed:
+
+```text
+error[E0277]: the trait bound `Weight: Eq` is not satisfied
+help: the trait `Eq` is not implemented for `Weight`
+```
+
+Only `Eq` was affected. Every other core trait the concrete form generates is checked through its own method body.
+
+### Migration
+
+Implement `Eq` for the inner type if it can satisfy the contract:
+
+```rust
+impl Eq for Weight {}
+```
+
+If it cannot -- an inner type holding a float, say -- use the generic form instead. Its implementations are each conditional on the inner type, so it yields `PartialEq` without `Eq`:
+
+```rust
+kubetsu::define_id!(pub struct MyId<T, U>;);
+
+struct WeightTag;
+type WeightId = MyId<WeightTag, Weight>;
+```
+
 ## 0.6.x → 0.7.0
 
 ### Breaking Change: serde / fake / sqlx support moved to separate crates

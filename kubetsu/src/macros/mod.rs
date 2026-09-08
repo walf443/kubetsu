@@ -41,6 +41,35 @@ mod test;
 /// - `Debug`, `PartialEq`, `Eq`, `Hash`, `Clone`
 /// - `From<InnerType>`
 ///
+/// ## Inner type requirements
+///
+/// The concrete form implements `Debug`, `PartialEq`, `Eq`, `Hash` and `Clone`
+/// unconditionally, so the inner type must implement all of them. `Eq` is
+/// checked explicitly: alone among those it has no methods, so it would
+/// otherwise be claimed for an inner type that implements only `PartialEq`,
+/// producing an ID whose `Eq` is a lie and which yields duplicate entries in a
+/// `HashSet`.
+///
+/// ```rust,compile_fail
+/// use std::hash::{Hash, Hasher};
+///
+/// #[derive(Clone, Debug)]
+/// pub struct Weight(f64);
+/// impl PartialEq for Weight {
+///     fn eq(&self, other: &Self) -> bool { self.0 == other.0 }
+/// }
+/// impl Hash for Weight {
+///     fn hash<H: Hasher>(&self, state: &mut H) { self.0.to_bits().hash(state) }
+/// }
+///
+/// // `Weight` is `PartialEq` but not `Eq`, so this does not compile.
+/// kubetsu::define_id!(pub struct WeightId(Weight););
+/// ```
+///
+/// The generic form carries no such requirement, because each of its
+/// implementations is conditional on the inner type: `MyId<T, f64>` simply gets
+/// `PartialEq` without `Eq`.
+///
 /// ## Ordering
 ///
 /// The generic form additionally implements `PartialOrd` and `Ord`, each
@@ -194,6 +223,18 @@ macro_rules! define_id {
 macro_rules! __impl_id_core_traits {
     // Concrete type (no generics)
     ([] $name:ty, $inner:ty) => {
+        // `Eq` below is unconditional, and being a marker trait it would be
+        // claimed even for an inner type that only implements `PartialEq`.
+        // Every other core trait is checked structurally by its own method
+        // body, so this is the one that needs an explicit assertion.
+        const _: () = {
+            fn _assert_inner_implements_eq()
+            where
+                $inner: ::core::cmp::Eq,
+            {
+            }
+        };
+
         impl ::core::fmt::Debug for $name {
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                 self.inner().fmt(f)
