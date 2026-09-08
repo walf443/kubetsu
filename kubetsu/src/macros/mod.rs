@@ -41,6 +41,76 @@ mod test;
 /// - `Debug`, `PartialEq`, `Eq`, `Hash`, `Clone`
 /// - `From<InnerType>`
 ///
+/// ## Inner type requirements
+///
+/// The concrete form implements `Debug`, `PartialEq`, `Eq`, `Hash` and `Clone`
+/// unconditionally, so the inner type must implement all of them. `Eq` is
+/// checked explicitly: alone among those it has no methods, so it would
+/// otherwise be claimed for an inner type that implements only `PartialEq`,
+/// producing an ID whose `Eq` is a lie and which yields duplicate entries in a
+/// `HashSet`.
+///
+/// ```rust,compile_fail
+/// use std::hash::{Hash, Hasher};
+///
+/// #[derive(Clone, Debug)]
+/// pub struct Weight(f64);
+/// impl PartialEq for Weight {
+///     fn eq(&self, other: &Self) -> bool { self.0 == other.0 }
+/// }
+/// impl Hash for Weight {
+///     fn hash<H: Hasher>(&self, state: &mut H) { self.0.to_bits().hash(state) }
+/// }
+///
+/// // `Weight` is `PartialEq` but not `Eq`, so this does not compile.
+/// kubetsu::define_id!(pub struct WeightId(Weight););
+/// ```
+///
+/// Those requirements are real bounds, not just conventions: the generated
+/// bodies call each trait through a fully qualified path, so an inner type
+/// missing one is rejected rather than silently resolved to some other trait
+/// that happens to be in scope where the macro was invoked.
+///
+/// ```rust
+/// use std::fmt::Display; // in scope, and `String` implements it
+///
+/// kubetsu::define_id!(pub struct ItemId(String););
+///
+/// assert_eq!(format!("{:?}", ItemId::new("a".to_string())), "\"a\"");
+/// ```
+///
+/// ```rust,compile_fail
+/// use std::fmt::{Display, Formatter, Result as FmtResult};
+/// use std::hash::{Hash, Hasher};
+///
+/// #[derive(Clone, PartialEq, Eq)]
+/// pub struct Code(u32);
+/// impl Display for Code {
+///     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult { write!(f, "code-{}", self.0) }
+/// }
+/// impl Hash for Code {
+///     fn hash<H: Hasher>(&self, state: &mut H) { self.0.hash(state) }
+/// }
+///
+/// // `Code` implements `Display` but not `Debug`, so this does not compile.
+/// kubetsu::define_id!(pub struct CodeId(Code););
+/// ```
+///
+/// The generic form carries no such requirement, because each of its
+/// implementations is conditional on the inner type: `MyId<T, f64>` simply gets
+/// `PartialEq` without `Eq`.
+///
+/// ```rust,compile_fail
+/// kubetsu::define_id!(pub struct MyId<T, U>;);
+///
+/// struct WeightTag;
+///
+/// fn requires_eq<T: Eq>() {}
+///
+/// // `f64` is `PartialEq` but not `Eq`, so neither is the ID.
+/// requires_eq::<MyId<WeightTag, f64>>();
+/// ```
+///
 /// ## Ordering
 ///
 /// The generic form additionally implements `PartialOrd` and `Ord`, each
@@ -194,15 +264,28 @@ macro_rules! define_id {
 macro_rules! __impl_id_core_traits {
     // Concrete type (no generics)
     ([] $name:ty, $inner:ty) => {
+        // `Eq` below is unconditional, and being a marker trait it would be
+        // claimed even for an inner type that only implements `PartialEq`.
+        // Every other core trait below calls the inner type through a fully
+        // qualified path, so its own body checks the bound; `Eq` has no method
+        // to check, which is why it needs an explicit assertion.
+        const _: () = {
+            fn _assert_inner_implements_eq()
+            where
+                $inner: ::core::cmp::Eq,
+            {
+            }
+        };
+
         impl ::core::fmt::Debug for $name {
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                self.inner().fmt(f)
+                ::core::fmt::Debug::fmt(self.inner(), f)
             }
         }
 
         impl ::core::cmp::PartialEq for $name {
             fn eq(&self, other: &Self) -> bool {
-                self.inner().eq(other.inner())
+                ::core::cmp::PartialEq::eq(self.inner(), other.inner())
             }
         }
 
@@ -210,13 +293,13 @@ macro_rules! __impl_id_core_traits {
 
         impl ::core::hash::Hash for $name {
             fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
-                self.inner().hash(state)
+                ::core::hash::Hash::hash(self.inner(), state)
             }
         }
 
         impl ::core::clone::Clone for $name {
             fn clone(&self) -> Self {
-                Self::new(self.inner().clone())
+                Self::new(::core::clone::Clone::clone(self.inner()))
             }
         }
 
@@ -230,13 +313,13 @@ macro_rules! __impl_id_core_traits {
     ([$($gen:tt)+] $name:ty, $inner:ty) => {
         impl<$($gen)+> ::core::fmt::Debug for $name where $inner: ::core::fmt::Debug {
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                self.inner().fmt(f)
+                ::core::fmt::Debug::fmt(self.inner(), f)
             }
         }
 
         impl<$($gen)+> ::core::cmp::PartialEq for $name where $inner: ::core::cmp::PartialEq {
             fn eq(&self, other: &Self) -> bool {
-                self.inner().eq(other.inner())
+                ::core::cmp::PartialEq::eq(self.inner(), other.inner())
             }
         }
 
@@ -245,28 +328,28 @@ macro_rules! __impl_id_core_traits {
         /// you can compare if value implement [PartialOrd].
         impl<$($gen)+> ::core::cmp::PartialOrd for $name where $inner: ::core::cmp::PartialOrd {
             fn partial_cmp(&self, other: &Self) -> ::core::option::Option<::core::cmp::Ordering> {
-                self.inner().partial_cmp(other.inner())
+                ::core::cmp::PartialOrd::partial_cmp(self.inner(), other.inner())
             }
         }
 
         /// you can use as ordered key (e.g. `BTreeMap`) if value implement [Ord].
         impl<$($gen)+> ::core::cmp::Ord for $name where $inner: ::core::cmp::Ord {
             fn cmp(&self, other: &Self) -> ::core::cmp::Ordering {
-                self.inner().cmp(other.inner())
+                ::core::cmp::Ord::cmp(self.inner(), other.inner())
             }
         }
 
         /// you can use as hash key if value implement [Hash].
         impl<$($gen)+> ::core::hash::Hash for $name where $inner: ::core::cmp::PartialEq + ::core::hash::Hash {
             fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
-                self.inner().hash(state)
+                ::core::hash::Hash::hash(self.inner(), state)
             }
         }
 
         /// you can clone if value implement [Clone].
         impl<$($gen)+> ::core::clone::Clone for $name where $inner: ::core::clone::Clone {
             fn clone(&self) -> Self {
-                Self::new(self.inner().clone())
+                Self::new(::core::clone::Clone::clone(self.inner()))
             }
         }
 

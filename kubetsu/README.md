@@ -54,6 +54,10 @@ let user_id = UserId::new(1);
 assert_eq!(&1, user_id.inner());
 ```
 
+The concrete form implements its core traits unconditionally, so its inner type must
+implement `Debug`, `PartialEq`, `Eq`, `Hash` and `Clone`. Use the generic form for an inner
+type that cannot be `Eq`, such as one holding a float.
+
 The concrete form does not implement `PartialOrd` and `Ord`, because a fixed inner type
 leaves nothing to make the implementation conditional on. Derive them when you need them:
 

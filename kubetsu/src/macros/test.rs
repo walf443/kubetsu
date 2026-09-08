@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 // --- Concrete form ---
 
@@ -63,6 +63,22 @@ fn test_hash() {
 }
 
 #[test]
+fn test_eq_is_reflexive() {
+    // Documents what `Eq` buys an ID: reflexive equality, and deduplication in
+    // a `HashSet`. This is not the regression guard for the inner-type
+    // assertion -- `UserId`'s inner type is `i64`, which is always `Eq`, so
+    // this passes with or without it. The guard is the `compile_fail` doctest
+    // on `define_id!`.
+    let id = UserId::new(1);
+    assert_eq!(id, id.clone());
+
+    let mut set = HashSet::new();
+    set.insert(id.clone());
+    set.insert(id.clone());
+    assert_eq!(set.len(), 1);
+}
+
+#[test]
 fn test_string_id() {
     let id = ItemId::new("abc".to_string());
     assert_eq!(id.inner(), "abc");
@@ -116,6 +132,16 @@ mod generic_tests {
         let id = MyUserId::new(1);
         map.insert(id.clone(), "user");
         assert_eq!(map.get(&id), Some(&"user"));
+    }
+
+    #[test]
+    fn test_eq_is_conditional() {
+        // The positive half only: an `Eq` inner type yields an `Eq` ID. This
+        // passes even if the bound were weakened, so the regression guard is
+        // the negative half -- a `compile_fail` doctest on `define_id!`, since
+        // absence of a trait cannot be asserted at runtime.
+        fn requires_eq<T: Eq>() {}
+        requires_eq::<MyUserId>();
     }
 
     #[test]
