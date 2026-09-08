@@ -1,6 +1,6 @@
 [package]
 name = "kubetsu-serde"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
 
@@ -19,7 +19,7 @@ homepage = "https://github.com/walf443/kubetsu"
 repository = "https://github.com/walf443/kubetsu.git"
 
 [dependencies]
-kubetsu = { version = "0.7", path = "../kubetsu" }
+kubetsu = { version = "0.8", path = "../kubetsu" }
 serde = { version = "1", default-features = false }
 
 [dev-dependencies]
