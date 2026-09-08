@@ -583,7 +583,7 @@ mod tests {
             Ok(pool.clone())
         }
 
-        #[dtor]
+        #[dtor(unsafe)]
         fn cleanup_mysql() {
             if let Some(container) = MYSQL_CONTAINER.lock().ok().and_then(|mut g| g.take()) {
                 let rt = tokio::runtime::Runtime::new().unwrap();
@@ -673,7 +673,7 @@ mod tests {
             Ok(pool.clone())
         }
 
-        #[dtor]
+        #[dtor(unsafe)]
         fn cleanup_postgres() {
             if let Some(container) = POSTGRES_CONTAINER.lock().ok().and_then(|mut g| g.take()) {
                 let rt = tokio::runtime::Runtime::new().unwrap();
