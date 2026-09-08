@@ -24,6 +24,44 @@ pub mod __private {
 /// kubetsu::define_id!(pub struct MyId<T, U>;);
 /// kubetsu_sqlx::impl_sqlx!(MyId<T, U>);
 /// ```
+///
+/// # The inner type must suit every enabled backend
+///
+/// The generic form bounds each implementation on the inner type, so a backend
+/// the inner type does not support is simply skipped. The concrete form cannot:
+/// a fixed inner type leaves nothing to make an implementation conditional on,
+/// so it emits one per enabled feature and the inner type has to satisfy all of
+/// them.
+///
+/// `any` is where this bites, because `sqlx::Any` supports far fewer types than
+/// the real drivers -- `bool`, the sized integers and floats, `String`, `&str`
+/// and byte slices, and nothing else. An inner type the drivers handle happily,
+/// such as `Uuid` or a date-time, has no `Any` implementation, so:
+///
+/// ```rust,ignore
+/// kubetsu::define_id!(pub struct EventId(Uuid););
+/// kubetsu_sqlx::impl_sqlx!(EventId(Uuid));
+/// ```
+///
+/// compiles until something enables this crate's `any` feature, and then fails
+/// with `Uuid: sqlx::Type<sqlx::Any> is not satisfied`. Worth knowing because
+/// Cargo unifies features across the whole build: another crate entirely can
+/// turn `any` on, and the code that breaks is code that never asked for it.
+///
+/// Use the generic form for such an inner type -- its `Any` implementations
+/// bound on the inner type and drop out on their own:
+///
+/// ```rust
+/// use uuid::Uuid;
+///
+/// kubetsu::define_id!(pub struct MyId<T, U>;);
+/// kubetsu_sqlx::impl_sqlx!(MyId<T, U>);
+///
+/// struct Event;
+/// type EventId = MyId<Event, Uuid>;
+///
+/// let _ = EventId::new(Uuid::now_v7());
+/// ```
 #[macro_export]
 macro_rules! impl_sqlx {
     // Concrete form: impl_sqlx!(UserId(i64));
