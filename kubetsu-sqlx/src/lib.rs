@@ -655,6 +655,15 @@ mod tests {
             let conn = get_db_conn().await.unwrap();
             let mut tx = conn.begin().await.unwrap();
 
+            // Unlike PostgreSQL, MySQL does not roll back CREATE TEMPORARY
+            // TABLE, so the table outlives this transaction on whichever
+            // pooled connection ran it. Drop it first, or the next test to
+            // want an `events` table fails -- and only when it happens to draw
+            // that connection.
+            sqlx::query("DROP TEMPORARY TABLE IF EXISTS events")
+                .execute(&mut *tx)
+                .await
+                .unwrap();
             sqlx::query("CREATE TEMPORARY TABLE events (id BINARY(16) PRIMARY KEY)")
                 .execute(&mut *tx)
                 .await

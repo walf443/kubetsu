@@ -242,12 +242,22 @@ mod tests {
 
             // fake's `Dummy<Faker> for Uuid` fills all 128 bits at random, so
             // the default config yields an arbitrary UUID rather than any
-            // particular version -- it does not even set the version and
-            // variant bits. Ask for a version explicitly, as below.
-            let id: EventId = Faker.fake();
-            let generic: MyEventId = Faker.fake();
+            // particular version -- it does not even set the version bits. Ask
+            // for a version explicitly, as below.
+            //
+            // Assert that rather than merely that two draws differ, so the
+            // claim fails loudly if fake ever starts producing a real version
+            // here: the version nibble is uniform over 16 values, so seeing
+            // only one across 20 draws has probability 16 * 16^-20.
+            let versions: std::collections::HashSet<usize> = (0..20)
+                .map(|_| Faker.fake::<EventId>().inner().get_version_num())
+                .collect();
+            assert!(
+                versions.len() > 1,
+                "expected unset version bits to vary, saw only {versions:?}"
+            );
 
-            assert_ne!(id, Faker.fake::<EventId>());
+            let generic: MyEventId = Faker.fake();
             assert_ne!(generic, Faker.fake::<MyEventId>());
         }
 
