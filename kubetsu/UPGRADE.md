@@ -74,10 +74,6 @@ ids.sort_by(|a, b| b.cmp(a));
 
 Alternatively, wrap the ID in a type of your own and implement the ordering there.
 
-#### 4. If you are using the deprecated `Id` type
-
-`kubetsu::Id` is still available in 0.8.0 and picks up the new implementations like any other `define_id!` generic type.
-
 ## 0.6.x → 0.7.0
 
 ### Breaking Change: serde / fake / sqlx support moved to separate crates
