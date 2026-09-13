@@ -1,5 +1,17 @@
 # Upgrade Guide
 
+## 0.2.x → 0.3.0
+
+Requires `kubetsu` 0.9. An older `kubetsu` alongside `kubetsu-fake` 0.3 resolves two different `KubetsuId` traits, so upgrade them together. See [kubetsu's upgrade guide](https://github.com/walf443/kubetsu/blob/main/kubetsu/UPGRADE.md) for the changes in that crate.
+
+```toml
+[dependencies]
+kubetsu = "0.9"
+kubetsu-fake = "0.3"
+```
+
+`impl_fake!` itself is unchanged.
+
 ## 0.1.x → 0.2.0
 
 Requires `kubetsu` 0.8. An older `kubetsu` alongside `kubetsu-fake` 0.2 resolves two different `KubetsuId` traits, so upgrade them together. See [kubetsu's upgrade guide](https://github.com/walf443/kubetsu/blob/main/kubetsu/UPGRADE.md) for the changes in that crate.
