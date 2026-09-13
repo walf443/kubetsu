@@ -174,3 +174,13 @@ mod generic_tests {
         assert_eq!(MyFloatId::new(f64::NAN).partial_cmp(&a), None);
     }
 }
+
+#[test]
+fn test_concrete_form_is_tuple_struct() {
+    // The concrete form must stay a single-unnamed-field tuple struct so that
+    // newtype-only derive macros can be attached to it.
+    let UserId(inner) = UserId::new(42);
+    assert_eq!(inner, 42);
+    let id = ItemId("x".to_string());
+    assert_eq!(id.inner(), "x");
+}
