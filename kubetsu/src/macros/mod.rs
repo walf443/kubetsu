@@ -34,6 +34,21 @@ mod test;
 /// assert_eq!(*user_id.inner(), 42);
 /// ```
 ///
+/// The generated type is a tuple struct with a single private field
+/// (`struct UserId(i64)`), so attributes passed to the macro can include
+/// derive macros that only accept newtype shapes. Within the defining module
+/// the field is also reachable as `.0`:
+///
+/// ```rust
+/// kubetsu::define_id!(
+///     #[derive(Default)]
+///     pub struct UserId(i64);
+/// );
+///
+/// let user_id = UserId::default();
+/// assert_eq!(user_id.0, 0);
+/// ```
+///
 /// # Trait implementations
 ///
 /// The generated type always implements:
@@ -216,21 +231,23 @@ macro_rules! define_id {
         $crate::__impl_id_core_traits!([$phantom, $inner] $name<$phantom, $inner>, $inner);
     };
     // Concrete form: define_id!(pub struct UserId(i64););
+    //
+    // The generated type is a tuple struct with a single private field so that
+    // derive macros which only accept "newtype" shapes (a single unnamed field)
+    // can be attached through `$meta`, e.g. `#[derive(toasty::Embed)]`.
     ($(#[$meta:meta])* $vis:vis struct $name:ident($inner:ty);) => {
         $(#[$meta])*
-        $vis struct $name {
-            inner: $inner,
-        }
+        $vis struct $name($inner);
 
         impl $name {
             /// Create a new instance. You should use this method carefully because the value is not checked as valid.
             pub fn new(inner: $inner) -> Self {
-                Self { inner }
+                Self(inner)
             }
 
             /// Access the internal value reference. You should use this method carefully.
             pub fn inner(&self) -> &$inner {
-                &self.inner
+                &self.0
             }
         }
 
@@ -238,11 +255,11 @@ macro_rules! define_id {
             type Inner = $inner;
 
             fn new(inner: $inner) -> Self {
-                Self { inner }
+                Self(inner)
             }
 
             fn inner(&self) -> &$inner {
-                &self.inner
+                &self.0
             }
         }
 

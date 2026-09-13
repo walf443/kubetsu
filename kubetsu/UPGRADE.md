@@ -1,5 +1,90 @@
 # Upgrade Guide
 
+## 0.8.x → 0.9.0
+
+One breaking change, in the concrete form of `define_id!`. Start with the dependency update, which every upgrade needs.
+
+### Update your Cargo.toml dependencies
+
+**Before:**
+```toml
+[dependencies]
+kubetsu = "0.8"
+kubetsu-serde = "0.2"
+kubetsu-fake = "0.2"
+kubetsu-sqlx = { version = "0.3", features = ["sqlite"] }
+```
+
+**After:**
+```toml
+[dependencies]
+kubetsu = "0.9"
+kubetsu-serde = "0.3"
+kubetsu-fake = "0.3"
+kubetsu-sqlx = { version = "0.4", features = ["sqlite"] }
+```
+
+The adapter crates are bumped together because they expose `kubetsu` through the macros they generate. Mixing an older adapter with kubetsu 0.9 resolves two different `KubetsuId` traits.
+
+### Breaking Change: the concrete form is generated as a tuple struct
+
+The concrete form used to expand to a struct with one named field:
+
+```rust
+pub struct UserId {
+    inner: i64,
+}
+```
+
+It now expands to a tuple struct with one unnamed field:
+
+```rust
+pub struct UserId(i64);
+```
+
+The change lets derive macros that only accept a newtype shape -- a single unnamed field -- be attached through the attribute position of `define_id!`. The generic form is unchanged.
+
+The field was private before and remains private, so code outside the defining module is unaffected: `UserId::new(..)`, `.inner()` and `KubetsuId` behave exactly as they did. Two things do change.
+
+#### Migration: if you named the `inner` field inside the defining module
+
+Within the module that invokes `define_id!` the private field was reachable as `inner`. Such code no longer compiles:
+
+```text
+error[E0560]: struct `UserId` has no field named `inner`
+error[E0769]: tuple variant `UserId` written as struct variant
+error[E0609]: no field `inner` on type `UserId`
+```
+
+Replace the field name with `0`, or prefer the public API.
+
+**Before:**
+```rust
+let id = UserId { inner: 42 };
+let raw = id.inner;
+let UserId { inner } = id;
+```
+
+**After:**
+```rust
+let id = UserId::new(42);   // or `UserId(42)`
+let raw = *id.inner();      // or `id.0`
+let UserId(inner) = id;
+```
+
+#### Migration: if you derived a shape-sensitive trait on a concrete ID
+
+A derive macro attached through `define_id!` sees the generated struct, and some derives produce different output for a named field than for a newtype. `serde::Serialize` is the common case: on the 0.8 shape it emitted `{"inner":42}`; on the 0.9 shape it emits `42`. This compiles cleanly, so check any concrete ID that derives `Serialize`, `Deserialize`, `schemars::JsonSchema` or a similar shape-dependent trait directly:
+
+```rust
+kubetsu::define_id!(
+    #[derive(serde::Serialize)]   // wire format changes from {"inner":42} to 42
+    pub struct UserId(i64);
+);
+```
+
+If the newtype output is what you wanted, nothing needs to change -- and `kubetsu_serde::impl_serde!`, which has always serialized as the bare inner value, remains the recommended route. If you need to keep emitting `{"inner":42}` for compatibility, wrap the ID in a struct of your own that has an `inner` field and derive on that instead.
+
 ## 0.7.x → 0.8.0
 
 Three breaking changes, all in `define_id!`. Start with the dependency update, which every upgrade needs.
