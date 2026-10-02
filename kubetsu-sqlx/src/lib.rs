@@ -550,62 +550,141 @@ mod tests {
 
     // Binding an ID by value must reach the inner type's by-value `encode`,
     // which lets a driver take ownership (SQLite wraps an owned `String` or
-    // `Vec<u8>` as it is, but clones it on the by-reference path).
-    #[cfg(feature = "sqlite")]
+    // `Vec<u8>` as it is, but clones it on the by-reference path). `Probe`
+    // records which `Encode` method ran, for every enabled backend and both
+    // macro forms.
+    #[cfg(any(
+        feature = "any",
+        feature = "mysql",
+        feature = "postgres",
+        feature = "sqlite"
+    ))]
     mod by_value {
-        use super::MyId;
         use sqlx::encode::IsNull;
         use sqlx::error::BoxDynError;
-        use sqlx::sqlite::{SqliteArguments, SqliteArgumentsBuffer, SqliteTypeInfo};
-        use sqlx::{Arguments, Encode, Sqlite, Type};
+        use sqlx::{Arguments, Database, Decode, Encode, Type};
         use std::cell::Cell;
 
         thread_local! {
+            /// (calls to `encode`, calls to `encode_by_ref`) on this test thread.
             static CALLS: Cell<(u32, u32)> = const { Cell::new((0, 0)) };
         }
 
-        /// An inner type that records which `Encode` method was called.
+        fn reset() {
+            CALLS.with(|c| c.set((0, 0)));
+        }
+
+        fn calls() -> (u32, u32) {
+            CALLS.with(Cell::get)
+        }
+
+        /// An inner type that records which `Encode` method was called. It
+        /// encodes as the integer 1, which every backend supports.
+        #[derive(Clone, Debug, PartialEq, Eq, Hash)]
         struct Probe;
 
-        impl Type<Sqlite> for Probe {
-            fn type_info() -> SqliteTypeInfo {
-                <i64 as Type<Sqlite>>::type_info()
-            }
+        macro_rules! impl_probe {
+            ($feature:literal, $db:ty) => {
+                #[cfg(feature = $feature)]
+                impl Type<$db> for Probe {
+                    fn type_info() -> <$db as Database>::TypeInfo {
+                        <i64 as Type<$db>>::type_info()
+                    }
+                }
+
+                #[cfg(feature = $feature)]
+                impl Encode<'_, $db> for Probe {
+                    fn encode(
+                        self,
+                        buf: &mut <$db as Database>::ArgumentBuffer,
+                    ) -> Result<IsNull, BoxDynError> {
+                        CALLS.with(|c| c.set((c.get().0 + 1, c.get().1)));
+                        <i64 as Encode<$db>>::encode(1, buf)
+                    }
+
+                    fn encode_by_ref(
+                        &self,
+                        buf: &mut <$db as Database>::ArgumentBuffer,
+                    ) -> Result<IsNull, BoxDynError> {
+                        CALLS.with(|c| c.set((c.get().0, c.get().1 + 1)));
+                        <i64 as Encode<$db>>::encode(1, buf)
+                    }
+                }
+
+                #[cfg(feature = $feature)]
+                impl Decode<'_, $db> for Probe {
+                    fn decode(_: <$db as Database>::ValueRef<'_>) -> Result<Self, BoxDynError> {
+                        Ok(Probe)
+                    }
+                }
+            };
         }
 
-        impl Encode<'_, Sqlite> for Probe {
-            fn encode(self, buf: &mut SqliteArgumentsBuffer) -> Result<IsNull, BoxDynError> {
-                CALLS.with(|c| c.set((c.get().0 + 1, c.get().1)));
-                <i64 as Encode<Sqlite>>::encode(1, buf)
-            }
+        impl_probe!("any", sqlx::Any);
+        impl_probe!("mysql", sqlx::MySql);
+        impl_probe!("postgres", sqlx::Postgres);
+        impl_probe!("sqlite", sqlx::Sqlite);
 
-            fn encode_by_ref(
-                &self,
-                buf: &mut SqliteArgumentsBuffer,
-            ) -> Result<IsNull, BoxDynError> {
-                CALLS.with(|c| c.set((c.get().0, c.get().1 + 1)));
-                <i64 as Encode<Sqlite>>::encode(1, buf)
-            }
-        }
+        kubetsu::define_id!(
+            struct ConcreteProbeId(Probe);
+        );
+        crate::impl_sqlx!(ConcreteProbeId(Probe));
 
+        kubetsu::define_id!(
+            struct GenericProbeId<T, U>;
+        );
+        crate::impl_sqlx!(GenericProbeId<T, U>);
         struct Tag;
 
-        #[test]
-        fn test_bind_by_value_reaches_the_inner_encode() {
-            CALLS.with(|c| c.set((0, 0)));
-            let mut args = SqliteArguments::default();
-            args.add(MyId::<Tag, Probe>::new(Probe)).unwrap();
-            assert_eq!(CALLS.with(Cell::get), (1, 0));
+        macro_rules! by_value_tests {
+            ($feature:literal, $module:ident, $db:ty) => {
+                #[cfg(feature = $feature)]
+                mod $module {
+                    use super::*;
+
+                    fn bind<I>(id: I)
+                    where
+                        I: for<'q> Encode<'q, $db> + Type<$db> + Send,
+                    {
+                        let mut args = <<$db as Database>::Arguments as Default>::default();
+                        args.add(id).unwrap();
+                    }
+
+                    #[test]
+                    fn concrete_by_value_reaches_the_inner_encode() {
+                        reset();
+                        bind(ConcreteProbeId::new(Probe));
+                        assert_eq!(calls(), (1, 0));
+                    }
+
+                    #[test]
+                    fn generic_by_value_reaches_the_inner_encode() {
+                        reset();
+                        bind(GenericProbeId::<Tag, Probe>::new(Probe));
+                        assert_eq!(calls(), (1, 0));
+                    }
+
+                    #[test]
+                    fn concrete_by_reference_still_reaches_encode_by_ref() {
+                        reset();
+                        bind(&ConcreteProbeId::new(Probe));
+                        assert_eq!(calls(), (0, 1));
+                    }
+
+                    #[test]
+                    fn generic_by_reference_still_reaches_encode_by_ref() {
+                        reset();
+                        bind(&GenericProbeId::<Tag, Probe>::new(Probe));
+                        assert_eq!(calls(), (0, 1));
+                    }
+                }
+            };
         }
 
-        #[test]
-        fn test_bind_by_reference_still_reaches_encode_by_ref() {
-            CALLS.with(|c| c.set((0, 0)));
-            let id = MyId::<Tag, Probe>::new(Probe);
-            let mut buf = SqliteArgumentsBuffer::default();
-            let _ = Encode::<Sqlite>::encode_by_ref(&id, &mut buf).unwrap();
-            assert_eq!(CALLS.with(Cell::get), (0, 1));
-        }
+        by_value_tests!("any", any_backend, sqlx::Any);
+        by_value_tests!("mysql", mysql_backend, sqlx::MySql);
+        by_value_tests!("postgres", postgres_backend, sqlx::Postgres);
+        by_value_tests!("sqlite", sqlite_backend, sqlx::Sqlite);
     }
 
     // Only the driver modules that have a UUID column type use these.
