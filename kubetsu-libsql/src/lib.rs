@@ -109,7 +109,7 @@ macro_rules! impl_libsql {
         impl ::core::convert::From<$name> for $crate::__private::libsql::Value {
             fn from(value: $name) -> Self {
                 <$inner as ::core::convert::Into<$crate::__private::libsql::Value>>::into(
-                    ::core::clone::Clone::clone(value.inner()),
+                    value.into_inner(),
                 )
             }
         }
@@ -135,11 +135,11 @@ macro_rules! impl_libsql {
         impl<$phantom, $inner> ::core::convert::From<$name<$phantom, $inner>>
             for $crate::__private::libsql::Value
         where
-            $inner: ::core::convert::Into<$crate::__private::libsql::Value> + ::core::clone::Clone,
+            $inner: ::core::convert::Into<$crate::__private::libsql::Value>,
         {
             fn from(value: $name<$phantom, $inner>) -> Self {
                 <$inner as ::core::convert::Into<$crate::__private::libsql::Value>>::into(
-                    ::core::clone::Clone::clone(value.inner()),
+                    value.into_inner(),
                 )
             }
         }
@@ -250,6 +250,36 @@ mod tests {
             Value::try_from(*id.inner()),
             Err(libsql::Error::ToSqlConversionFailure(_))
         ));
+    }
+
+    #[test]
+    fn test_owned_conversion_needs_no_clone() {
+        // The by-value conversion moves the inner value out, so it has no
+        // `Clone` bound; only the by-reference one clones. This inner type is
+        // neither `Clone` nor `Debug`, so the test fails to compile if a bound
+        // returns to the owned generic impl.
+        struct Opaque(i64);
+        impl From<Opaque> for Value {
+            fn from(v: Opaque) -> Value {
+                Value::Integer(v.0)
+            }
+        }
+        struct Tag;
+
+        let id: MyId<Tag, Opaque> = MyId::new(Opaque(7));
+        assert_eq!(Value::from(id), Value::Integer(7));
+    }
+
+    #[test]
+    fn test_owned_conversion_moves_the_allocation() {
+        // A blob inner converts without being copied.
+        struct Tag;
+        let bytes = vec![1u8, 2, 3];
+        let ptr = bytes.as_ptr();
+        let Value::Blob(out) = Value::from(MyId::<Tag, Vec<u8>>::new(bytes)) else {
+            panic!("expected a blob");
+        };
+        assert_eq!(out.as_ptr(), ptr);
     }
 
     #[test]

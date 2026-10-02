@@ -18,7 +18,7 @@ homepage = "https://github.com/walf443/kubetsu"
 repository = "https://github.com/walf443/kubetsu.git"
 
 [dependencies]
-kubetsu = { version = "0.9", path = "../kubetsu" }
+kubetsu = { version = "0.10", path = "../kubetsu" }
 libsql = { version = "0.9", default-features = false }
 
 [dev-dependencies]
