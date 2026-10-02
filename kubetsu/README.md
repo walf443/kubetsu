@@ -37,6 +37,8 @@ let user_id = UserId::new(1);
 assert_eq!(&1, user_id.inner());
 // you can use `==` that have same value.
 assert_eq!(UserId::new(1), user_id);
+// or take the original value out with `into_inner()`.
+assert_eq!(1, user_id.into_inner());
 ```
 
 The generated type implements `Debug`, `PartialEq`, `Eq`, `Hash`, `Clone`, and `From<InnerType>`.
@@ -52,11 +54,13 @@ kubetsu::define_id!(pub struct UserId(i32););
 
 let user_id = UserId::new(1);
 assert_eq!(&1, user_id.inner());
+assert_eq!(1, user_id.into_inner());
 ```
 
 The concrete form implements its core traits unconditionally, so its inner type must
 implement `Debug`, `PartialEq`, `Eq`, `Hash` and `Clone`. Use the generic form for an inner
-type that cannot be `Eq`, such as one holding a float.
+type that cannot be `Eq`, such as one holding a float. In either form the generated type
+cannot implement `Drop`, because `into_inner` moves the inner value out of it.
 
 The concrete form does not implement `PartialOrd` and `Ord`, because a fixed inner type
 leaves nothing to make the implementation conditional on. Derive them when you need them:

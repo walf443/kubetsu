@@ -21,6 +21,7 @@ mod test;
 ///
 /// let user_id = UserId::new(42);
 /// assert_eq!(*user_id.inner(), 42);
+/// assert_eq!(user_id.into_inner(), 42);
 /// ```
 ///
 /// # Concrete form
@@ -32,6 +33,7 @@ mod test;
 ///
 /// let user_id = UserId::new(42);
 /// assert_eq!(*user_id.inner(), 42);
+/// assert_eq!(user_id.into_inner(), 42);
 /// ```
 ///
 /// The generated type is a tuple struct with a single private field
@@ -52,7 +54,7 @@ mod test;
 /// # Trait implementations
 ///
 /// The generated type always implements:
-/// - `new()` and `inner()` methods
+/// - `new()`, `inner()` and `into_inner()` methods
 /// - `Debug`, `PartialEq`, `Eq`, `Hash`, `Clone`
 /// - `From<InnerType>`
 ///
@@ -124,6 +126,57 @@ mod test;
 ///
 /// // `f64` is `PartialEq` but not `Eq`, so neither is the ID.
 /// requires_eq::<MyId<WeightTag, f64>>();
+/// ```
+///
+/// ## The generated type cannot implement `Drop`
+///
+/// This one applies to both forms. `into_inner` moves the inner value out of
+/// the ID, and Rust forbids moving a field out of a type that implements
+/// `Drop`. So neither a hand-written `impl Drop` nor a derive that adds one
+/// (such as `ZeroizeOnDrop`) can be attached to a generated type, whether or
+/// not `into_inner` is ever called:
+///
+/// ```rust,compile_fail,E0509
+/// kubetsu::define_id!(pub struct KeyId(String););
+///
+/// // error[E0509]: cannot move out of type `KeyId`, which implements the `Drop` trait
+/// impl Drop for KeyId {
+///     fn drop(&mut self) {}
+/// }
+/// ```
+///
+/// rustc reports the error at the `define_id!` invocation, where the moving
+/// method is generated, not at the `impl Drop`, so if the two live in
+/// different modules the `Drop` implementation is what to look for.
+///
+/// Put the `Drop` behaviour on the inner type instead; a field's own
+/// destructor runs when the ID is dropped and still runs on the value that
+/// `into_inner` hands back.
+///
+/// ## `into_inner` takes precedence over methods of the same name
+///
+/// The generated `into_inner` is an inherent method, so an inherent
+/// `into_inner` of your own on the same type, whatever its signature, is a
+/// duplicate definition (`error[E0592]`); delete it. One that the type gets
+/// from a trait of yours still compiles, but is no longer reliable: method-call
+/// syntax picks the generated one for an owned ID and the trait method for a
+/// reference to one, and when the trait method returns the inner type nothing
+/// fails, the call just returns the raw inner value, as the last line below
+/// shows. Rename the trait method.
+///
+/// ```rust
+/// kubetsu::define_id!(pub struct OtherId(String););
+///
+/// trait Labelled {
+///     fn into_inner(&self) -> String;
+/// }
+/// impl Labelled for OtherId {
+///     fn into_inner(&self) -> String { format!("other:{}", self.inner()) }
+/// }
+///
+/// let id = OtherId::new("a".to_string());
+/// assert_eq!(Labelled::into_inner(&id), "other:a"); // the trait method
+/// assert_eq!(id.into_inner(), "a");                 // the generated one, consumes `id`
 /// ```
 ///
 /// ## Ordering
@@ -211,6 +264,13 @@ macro_rules! define_id {
             pub fn inner(&self) -> &$inner {
                 &self.inner
             }
+
+            /// Consume the ID and return the internal value. You should use this method carefully:
+            /// the returned value no longer carries the type tag, so IDs of different types become
+            /// indistinguishable again.
+            pub fn into_inner(self) -> $inner {
+                self.inner
+            }
         }
 
         impl<$phantom, $inner> $crate::KubetsuId for $name<$phantom, $inner> {
@@ -225,6 +285,10 @@ macro_rules! define_id {
 
             fn inner(&self) -> &$inner {
                 &self.inner
+            }
+
+            fn into_inner(self) -> $inner {
+                self.inner
             }
         }
 
@@ -249,6 +313,13 @@ macro_rules! define_id {
             pub fn inner(&self) -> &$inner {
                 &self.0
             }
+
+            /// Consume the ID and return the internal value. You should use this method carefully:
+            /// the returned value no longer carries the type tag, so IDs of different types become
+            /// indistinguishable again.
+            pub fn into_inner(self) -> $inner {
+                self.0
+            }
         }
 
         impl $crate::KubetsuId for $name {
@@ -260,6 +331,10 @@ macro_rules! define_id {
 
             fn inner(&self) -> &$inner {
                 &self.0
+            }
+
+            fn into_inner(self) -> $inner {
+                self.0
             }
         }
 

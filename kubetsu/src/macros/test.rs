@@ -27,6 +27,55 @@ fn test_new_and_inner() {
 }
 
 #[test]
+fn test_into_inner() {
+    assert_eq!(UserId::new(42).into_inner(), 42);
+    assert_eq!(MyUserId::new(42).into_inner(), 42);
+}
+
+#[test]
+fn test_into_inner_through_the_trait() {
+    // Generic code over the marker trait can consume an ID without `Clone`.
+    fn take<I: crate::KubetsuId>(id: I) -> I::Inner {
+        id.into_inner()
+    }
+    assert_eq!(take(UserId::new(42)), 42);
+    assert_eq!(take(MyUserId::new(42)), 42);
+    assert_eq!(take(ItemId::new("abc".to_string())), "abc");
+}
+
+#[test]
+fn test_into_inner_has_no_bounds() {
+    // The method exists so that by-value consumers need no `Clone`. Pin that
+    // with an inner type that is neither `Clone` nor `Debug`: this fails to
+    // compile if any bound sneaks into the generic impl block.
+    struct Opaque;
+    let id: MyId<Item, Opaque> = MyId::new(Opaque);
+    let _: Opaque = id.into_inner();
+
+    // The same through the trait, so the `impl KubetsuId` block cannot grow a
+    // bound either.
+    fn take<I: crate::KubetsuId>(id: I) -> I::Inner {
+        id.into_inner()
+    }
+    let _: Opaque = take(MyId::<Item, Opaque>::new(Opaque));
+}
+
+#[test]
+fn test_into_inner_moves_without_cloning() {
+    // A non-`Copy` inner comes back as the very same allocation.
+    let s = String::from("abc");
+    let ptr = s.as_ptr();
+    let out = ItemId::new(s).into_inner();
+    assert_eq!(out.as_ptr(), ptr);
+
+    let s = String::from("abc");
+    let ptr = s.as_ptr();
+    let id: MyId<Item, String> = MyId::new(s);
+    let out = id.into_inner();
+    assert_eq!(out.as_ptr(), ptr);
+}
+
+#[test]
 fn test_from() {
     let id: UserId = 42.into();
     assert_eq!(*id.inner(), 42);
