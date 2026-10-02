@@ -22,6 +22,10 @@ kubetsu = { version = "0.9", path = "../kubetsu" }
 libsql = { version = "0.9", default-features = false }
 
 [dev-dependencies]
+kubetsu-serde = { path = "../kubetsu-serde" }
+kubetsu-fake = { path = "../kubetsu-fake" }
+serde_json = "1"
+fake = "5"
 libsql = { version = "0.9", default-features = false, features = ["core"] }
 tokio = { version = "1", features = ["macros", "rt"] }
 uuid = { version = "1" }

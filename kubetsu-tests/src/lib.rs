@@ -1,4 +1,13 @@
 //! Integration tests: all adapter crates combined on the same types.
+//!
+//! kubetsu-libsql is deliberately not among them. Its own tests enable
+//! libsql's `core` feature, and under `cargo test --workspace` that feature
+//! unifies into every member that depends on libsql at all. `core` links
+//! libsql-ffi's bundled SQLite, which defines the same `sqlite3_*` symbols
+//! as the libsqlite3-sys that sqlx links here, so the test binary of this
+//! crate would carry two SQLites (the macOS linker warns and picks one, GNU
+//! ld refuses). Coexistence with serde and fake is covered in
+//! kubetsu-libsql's own tests instead.
 
 #[cfg(test)]
 mod tests {

@@ -42,15 +42,50 @@ pub mod __private {
 /// # The inner type must convert into `libsql::Value`
 ///
 /// The generic form bounds its implementations on `U: Into<Value>`, so an
-/// inner type libsql does not know simply gets no implementation. The concrete
-/// form has nothing to make the implementation conditional on, so it fails to
-/// compile instead. libsql converts the sized integers (`u64` only through
-/// `TryFrom`, so it does not qualify), floats, `bool`, `String`, `&str`, byte
-/// slices and `Vec<u8>`. A `Uuid` inner, for example, is not among them:
+/// inner type libsql does not know simply gets no implementation and the ID
+/// stays usable for everything else:
+///
+/// ```rust
+/// kubetsu::define_id!(pub struct MyId<T, U>;);
+/// kubetsu_libsql::impl_libsql!(MyId<T, U>);
+///
+/// struct Event;
+/// type EventId = MyId<Event, uuid::Uuid>;
+///
+/// // Compiles; there is just no `From<EventId> for libsql::Value`.
+/// let _ = EventId::new(uuid::Uuid::nil());
+/// ```
+///
+/// The concrete form has nothing to make the implementation conditional on,
+/// so it fails to compile instead. (This is a smoke test: `compile_fail`
+/// accepts any error, and the intended one is `Value: From<Uuid>` not
+/// satisfied.)
 ///
 /// ```rust,compile_fail
 /// kubetsu::define_id!(pub struct EventId(uuid::Uuid););
 /// kubetsu_libsql::impl_libsql!(EventId(uuid::Uuid));
+/// ```
+///
+/// libsql converts `i8` through `i64`, `u8` through `u32`, `f32`, `f64`,
+/// `bool`, `String`, `&str`, `&[u8]` and `Vec<u8>` through `From`.
+///
+/// # `u64` inner types
+///
+/// `u64` is the one common ID shape that does not qualify: libsql converts it
+/// only through `TryFrom`, because a value above `i64::MAX` does not fit an
+/// SQLite integer. This macro builds on `From` rather than `TryFrom` so that
+/// `Option<Id>` keeps converting (libsql's `From<Option<T>>` needs
+/// `T: Into<Value>`), which leaves `u64` out of both forms. Prefer `i64`,
+/// which is what SQLite stores anyway. If the inner type has to stay `u64`,
+/// bind the inner value at the call site and let libsql's own range check
+/// run:
+///
+/// ```rust
+/// kubetsu::define_id!(pub struct BigId(u64););
+///
+/// let id = BigId::new(42);
+/// let value = libsql::Value::try_from(*id.inner()).unwrap();
+/// assert_eq!(value, libsql::Value::Integer(42));
 /// ```
 ///
 /// # Reading back
@@ -194,6 +229,30 @@ mod tests {
     }
 
     #[test]
+    fn test_u64_inner_binds_through_try_from_at_the_call_site() {
+        // `u64` gets no `From` impl from the macro (see the docs), so the
+        // documented workaround is to convert the inner value directly and
+        // let libsql's own range check run. Pin that it works for both forms
+        // and that the range check is actually reached.
+        kubetsu::define_id!(
+            pub struct BigId(u64);
+        );
+        struct Big;
+        type MyBigId = MyId<Big, u64>;
+
+        let id = BigId::new(42);
+        assert_eq!(Value::try_from(*id.inner()).unwrap(), Value::Integer(42));
+        let id = MyBigId::new(42);
+        assert_eq!(Value::try_from(*id.inner()).unwrap(), Value::Integer(42));
+
+        let id = BigId::new(u64::MAX);
+        assert!(matches!(
+            Value::try_from(*id.inner()),
+            Err(libsql::Error::ToSqlConversionFailure(_))
+        ));
+    }
+
+    #[test]
     fn test_into_params_shapes() {
         // Positional: tuple, array, Vec, and the `params!` macro.
         let _ = (UserId::new(1), MyUserId::new(2)).into_params().unwrap();
@@ -206,6 +265,40 @@ mod tests {
         let _ = libsql::named_params![":id": UserId::new(1)]
             .into_params()
             .unwrap();
+    }
+
+    #[test]
+    fn test_coexists_with_the_other_adapters_on_one_type() {
+        // Not in kubetsu-tests, which links sqlx's SQLite and cannot also
+        // link libsql's (see the note there). Stack the adapters that can
+        // share a binary and check they agree on the inner value.
+        use fake::{Fake, Faker};
+
+        kubetsu::define_id!(
+            pub struct OrderId(i64);
+        );
+        kubetsu_serde::impl_serde!(OrderId(i64));
+        kubetsu_fake::impl_fake!(OrderId(i64));
+        crate::impl_libsql!(OrderId(i64));
+
+        kubetsu::define_id!(
+            pub struct AnyId<T, U>;
+        );
+        kubetsu_serde::impl_serde!(AnyId<T, U>);
+        kubetsu_fake::impl_fake!(AnyId<T, U>);
+        crate::impl_libsql!(AnyId<T, U>);
+        struct Order;
+        type MyOrderId = AnyId<Order, i64>;
+
+        let id: OrderId = serde_json::from_str("42").unwrap();
+        assert_eq!(Value::from(&id), Value::Integer(42));
+        let faked: OrderId = Faker.fake();
+        assert_eq!(Value::from(&faked), Value::Integer(*faked.inner()));
+
+        let id: MyOrderId = serde_json::from_str("42").unwrap();
+        assert_eq!(Value::from(&id), Value::Integer(42));
+        let faked: MyOrderId = Faker.fake();
+        assert_eq!(Value::from(&faked), Value::Integer(*faked.inner()));
     }
 
     #[tokio::test]
