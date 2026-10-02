@@ -33,6 +33,17 @@ fn test_into_inner() {
 }
 
 #[test]
+fn test_into_inner_through_the_trait() {
+    // Generic code over the marker trait can consume an ID without `Clone`.
+    fn take<I: crate::KubetsuId>(id: I) -> I::Inner {
+        id.into_inner()
+    }
+    assert_eq!(take(UserId::new(42)), 42);
+    assert_eq!(take(MyUserId::new(42)), 42);
+    assert_eq!(take(ItemId::new("abc".to_string())), "abc");
+}
+
+#[test]
 fn test_into_inner_has_no_bounds() {
     // The method exists so that by-value consumers need no `Clone`. Pin that
     // with an inner type that is neither `Clone` nor `Debug`: this fails to

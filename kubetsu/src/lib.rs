@@ -15,8 +15,11 @@ pub use id::Id;
 ///
 /// Adapter crates (`kubetsu-serde`, `kubetsu-fake`, `kubetsu-sqlx`) require
 /// this trait to ensure that their macros are only used with kubetsu ID types.
+/// Its methods mirror the inherent ones every generated type has, so code
+/// generic over `T: KubetsuId` can construct, borrow and consume an ID.
 pub trait KubetsuId {
     type Inner;
     fn new(inner: Self::Inner) -> Self;
     fn inner(&self) -> &Self::Inner;
+    fn into_inner(self) -> Self::Inner;
 }

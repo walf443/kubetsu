@@ -83,27 +83,6 @@ mod test;
 /// kubetsu::define_id!(pub struct WeightId(Weight););
 /// ```
 ///
-/// ## The generated type cannot implement `Drop`
-///
-/// `into_inner` moves the inner value out of the ID, and Rust forbids moving
-/// a field out of a type that implements `Drop`. So neither a hand-written
-/// `impl Drop` nor a derive that adds one (such as `ZeroizeOnDrop`) can be
-/// attached to a generated type, in either form, whether or not `into_inner`
-/// is ever called:
-///
-/// ```rust,compile_fail
-/// kubetsu::define_id!(pub struct KeyId(String););
-///
-/// // error[E0509]: cannot move out of type `KeyId`, which implements the `Drop` trait
-/// impl Drop for KeyId {
-///     fn drop(&mut self) {}
-/// }
-/// ```
-///
-/// Put the `Drop` behaviour on the inner type instead; a field's own
-/// destructor runs when the ID is dropped and still runs on the value that
-/// `into_inner` hands back.
-///
 /// Those requirements are real bounds, not just conventions: the generated
 /// bodies call each trait through a fully qualified path, so an inner type
 /// missing one is rejected rather than silently resolved to some other trait
@@ -148,6 +127,31 @@ mod test;
 /// // `f64` is `PartialEq` but not `Eq`, so neither is the ID.
 /// requires_eq::<MyId<WeightTag, f64>>();
 /// ```
+///
+/// ## The generated type cannot implement `Drop`
+///
+/// This one applies to both forms. `into_inner` moves the inner value out of
+/// the ID, and Rust forbids moving a field out of a type that implements
+/// `Drop`. So neither a hand-written `impl Drop` nor a derive that adds one
+/// (such as `ZeroizeOnDrop`) can be attached to a generated type, whether or
+/// not `into_inner` is ever called:
+///
+/// ```rust,compile_fail
+/// kubetsu::define_id!(pub struct KeyId(String););
+///
+/// // error[E0509]: cannot move out of type `KeyId`, which implements the `Drop` trait
+/// impl Drop for KeyId {
+///     fn drop(&mut self) {}
+/// }
+/// ```
+///
+/// rustc reports the error at the `define_id!` invocation, where the moving
+/// method is generated, not at the `impl Drop`, so if the two live in
+/// different modules the `Drop` implementation is what to look for.
+///
+/// Put the `Drop` behaviour on the inner type instead; a field's own
+/// destructor runs when the ID is dropped and still runs on the value that
+/// `into_inner` hands back.
 ///
 /// ## Ordering
 ///
@@ -256,6 +260,10 @@ macro_rules! define_id {
             fn inner(&self) -> &$inner {
                 &self.inner
             }
+
+            fn into_inner(self) -> $inner {
+                self.inner
+            }
         }
 
         $crate::__impl_id_core_traits!([$phantom, $inner] $name<$phantom, $inner>, $inner);
@@ -297,6 +305,10 @@ macro_rules! define_id {
 
             fn inner(&self) -> &$inner {
                 &self.0
+            }
+
+            fn into_inner(self) -> $inner {
+                self.0
             }
         }
 
