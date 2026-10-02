@@ -21,6 +21,7 @@ mod test;
 ///
 /// let user_id = UserId::new(42);
 /// assert_eq!(*user_id.inner(), 42);
+/// assert_eq!(user_id.into_inner(), 42);
 /// ```
 ///
 /// # Concrete form
@@ -32,6 +33,7 @@ mod test;
 ///
 /// let user_id = UserId::new(42);
 /// assert_eq!(*user_id.inner(), 42);
+/// assert_eq!(user_id.into_inner(), 42);
 /// ```
 ///
 /// The generated type is a tuple struct with a single private field
@@ -211,6 +213,11 @@ macro_rules! define_id {
             pub fn inner(&self) -> &$inner {
                 &self.inner
             }
+
+            /// Consume the ID and return the internal value. You should use this method carefully.
+            pub fn into_inner(self) -> $inner {
+                self.inner
+            }
         }
 
         impl<$phantom, $inner> $crate::KubetsuId for $name<$phantom, $inner> {
@@ -248,6 +255,11 @@ macro_rules! define_id {
             /// Access the internal value reference. You should use this method carefully.
             pub fn inner(&self) -> &$inner {
                 &self.0
+            }
+
+            /// Consume the ID and return the internal value. You should use this method carefully.
+            pub fn into_inner(self) -> $inner {
+                self.0
             }
         }
 

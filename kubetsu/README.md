@@ -37,6 +37,8 @@ let user_id = UserId::new(1);
 assert_eq!(&1, user_id.inner());
 // you can use `==` that have same value.
 assert_eq!(UserId::new(1), user_id);
+// or take the original value out with `into_inner()`.
+assert_eq!(1, user_id.into_inner());
 ```
 
 The generated type implements `Debug`, `PartialEq`, `Eq`, `Hash`, `Clone`, and `From<InnerType>`.
