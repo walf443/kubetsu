@@ -54,7 +54,7 @@ mod test;
 /// # Trait implementations
 ///
 /// The generated type always implements:
-/// - `new()` and `inner()` methods
+/// - `new()`, `inner()` and `into_inner()` methods
 /// - `Debug`, `PartialEq`, `Eq`, `Hash`, `Clone`
 /// - `From<InnerType>`
 ///
@@ -82,6 +82,27 @@ mod test;
 /// // `Weight` is `PartialEq` but not `Eq`, so this does not compile.
 /// kubetsu::define_id!(pub struct WeightId(Weight););
 /// ```
+///
+/// ## The generated type cannot implement `Drop`
+///
+/// `into_inner` moves the inner value out of the ID, and Rust forbids moving
+/// a field out of a type that implements `Drop`. So neither a hand-written
+/// `impl Drop` nor a derive that adds one (such as `ZeroizeOnDrop`) can be
+/// attached to a generated type, in either form, whether or not `into_inner`
+/// is ever called:
+///
+/// ```rust,compile_fail
+/// kubetsu::define_id!(pub struct KeyId(String););
+///
+/// // error[E0509]: cannot move out of type `KeyId`, which implements the `Drop` trait
+/// impl Drop for KeyId {
+///     fn drop(&mut self) {}
+/// }
+/// ```
+///
+/// Put the `Drop` behaviour on the inner type instead; a field's own
+/// destructor runs when the ID is dropped and still runs on the value that
+/// `into_inner` hands back.
 ///
 /// Those requirements are real bounds, not just conventions: the generated
 /// bodies call each trait through a fully qualified path, so an inner type
@@ -214,7 +235,9 @@ macro_rules! define_id {
                 &self.inner
             }
 
-            /// Consume the ID and return the internal value. You should use this method carefully.
+            /// Consume the ID and return the internal value. You should use this method carefully:
+            /// the returned value no longer carries the type tag, so IDs of different types become
+            /// indistinguishable again.
             pub fn into_inner(self) -> $inner {
                 self.inner
             }
@@ -257,7 +280,9 @@ macro_rules! define_id {
                 &self.0
             }
 
-            /// Consume the ID and return the internal value. You should use this method carefully.
+            /// Consume the ID and return the internal value. You should use this method carefully:
+            /// the returned value no longer carries the type tag, so IDs of different types become
+            /// indistinguishable again.
             pub fn into_inner(self) -> $inner {
                 self.0
             }

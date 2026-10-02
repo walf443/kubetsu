@@ -1,5 +1,55 @@
 # Upgrade Guide
 
+## 0.9.0 → 0.9.1
+
+No dependency changes: the adapter crates keep working as they are. One new inherent method, `into_inner`, is generated for every ID type in both forms. It is a compatible change under Cargo's rules, but adding an inherent method can still collide with existing code in two ways.
+
+### A hand-written `into_inner` now collides with the generated one
+
+If you added your own `into_inner` to an ID type, the build fails with `error[E0592]: duplicate definitions with name 'into_inner'`.
+
+**Before:**
+```rust,ignore
+kubetsu::define_id!(pub struct UserId(i64););
+
+impl UserId {
+    pub fn into_inner(self) -> i64 {
+        self.0
+    }
+}
+```
+
+**After:** delete your implementation. The generated method has the same signature, `pub fn into_inner(self) -> Inner`.
+
+```rust
+kubetsu::define_id!(pub struct UserId(i64););
+
+assert_eq!(UserId::new(1).into_inner(), 1);
+```
+
+A method named `into_inner` that an ID type gets from one of your traits still compiles, but the inherent method now takes precedence at call sites, so make sure both do the same thing.
+
+### The generated type can no longer implement `Drop`
+
+`into_inner` moves the inner value out of the ID, and Rust forbids moving a field out of a type that implements `Drop`. An ID with a `Drop` implementation, hand-written or through a derive such as `ZeroizeOnDrop` attached via the macro's attribute pass-through, fails with `error[E0509]: cannot move out of type ..., which implements the 'Drop' trait`, even if `into_inner` is never called.
+
+**Before:**
+```rust,ignore
+kubetsu::define_id!(
+    #[derive(Zeroize, ZeroizeOnDrop)]
+    pub struct ApiKeyId(String);
+);
+```
+
+**After:** move the `Drop` behaviour to the inner type. A field's destructor runs when the ID is dropped, and still runs on the value that `into_inner` hands back.
+
+```rust,ignore
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Zeroize, ZeroizeOnDrop)]
+pub struct ApiKey(String);
+
+kubetsu::define_id!(pub struct ApiKeyId(ApiKey););
+```
+
 ## 0.8.x → 0.9.0
 
 One breaking change, in the concrete form of `define_id!`. Start with the dependency update, which every upgrade needs.
