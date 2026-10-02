@@ -158,11 +158,11 @@ mod test;
 /// The generated `into_inner` is an inherent method, so an inherent
 /// `into_inner` of your own on the same type, whatever its signature, is a
 /// duplicate definition (`error[E0592]`); delete it. One that the type gets
-/// from a trait of yours still compiles, but method-call syntax picks the
-/// generated one, which takes `self` by value. If the trait method also
-/// returns the inner type, that call silently resolves to the generated one
-/// and returns the raw inner value, as the last line below shows. Reach the
-/// trait method by its path instead:
+/// from a trait of yours still compiles, but is no longer reliable: method-call
+/// syntax picks the generated one for an owned ID and the trait method for a
+/// reference to one, and when the trait method returns the inner type nothing
+/// fails, the call just returns the raw inner value, as the last line below
+/// shows. Rename the trait method.
 ///
 /// ```rust
 /// kubetsu::define_id!(pub struct OtherId(String););
