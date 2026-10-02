@@ -136,7 +136,7 @@ mod test;
 /// (such as `ZeroizeOnDrop`) can be attached to a generated type, whether or
 /// not `into_inner` is ever called:
 ///
-/// ```rust,compile_fail
+/// ```rust,compile_fail,E0509
 /// kubetsu::define_id!(pub struct KeyId(String););
 ///
 /// // error[E0509]: cannot move out of type `KeyId`, which implements the `Drop` trait
@@ -152,6 +152,30 @@ mod test;
 /// Put the `Drop` behaviour on the inner type instead; a field's own
 /// destructor runs when the ID is dropped and still runs on the value that
 /// `into_inner` hands back.
+///
+/// ## `into_inner` takes precedence over methods of the same name
+///
+/// The generated `into_inner` is an inherent method, so an inherent
+/// `into_inner` of your own on the same type, whatever its signature, is a
+/// duplicate definition (`error[E0592]`); delete it. One that the type gets
+/// from a trait of yours still compiles, but method-call syntax now picks the
+/// generated one, which takes `self` by value. Reach the trait method with
+/// its path instead:
+///
+/// ```rust
+/// kubetsu::define_id!(pub struct OtherId(String););
+///
+/// trait Labelled {
+///     fn into_inner(&self) -> String;
+/// }
+/// impl Labelled for OtherId {
+///     fn into_inner(&self) -> String { format!("other:{}", self.inner()) }
+/// }
+///
+/// let id = OtherId::new("a".to_string());
+/// assert_eq!(Labelled::into_inner(&id), "other:a"); // the trait method
+/// assert_eq!(id.into_inner(), "a");                 // the generated one, consumes `id`
+/// ```
 ///
 /// ## Ordering
 ///

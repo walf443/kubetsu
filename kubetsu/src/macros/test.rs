@@ -51,6 +51,13 @@ fn test_into_inner_has_no_bounds() {
     struct Opaque;
     let id: MyId<Item, Opaque> = MyId::new(Opaque);
     let _: Opaque = id.into_inner();
+
+    // The same through the trait, so the `impl KubetsuId` block cannot grow a
+    // bound either.
+    fn take<I: crate::KubetsuId>(id: I) -> I::Inner {
+        id.into_inner()
+    }
+    let _: Opaque = take(MyId::<Item, Opaque>::new(Opaque));
 }
 
 #[test]
