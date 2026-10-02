@@ -603,7 +603,7 @@ mod tests {
             CALLS.with(|c| c.set((0, 0)));
             let id = MyId::<Tag, Probe>::new(Probe);
             let mut buf = SqliteArgumentsBuffer::default();
-            Encode::<Sqlite>::encode_by_ref(&id, &mut buf).unwrap();
+            let _ = Encode::<Sqlite>::encode_by_ref(&id, &mut buf).unwrap();
             assert_eq!(CALLS.with(Cell::get), (0, 1));
         }
     }
