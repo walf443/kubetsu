@@ -116,6 +116,13 @@ macro_rules! __impl_sqlx_any {
         }
 
         impl $crate::__private::sqlx::Encode<'_, $crate::__private::sqlx::Any> for $name {
+            fn encode(
+                self,
+                buf: &mut <$crate::__private::sqlx::Any as $crate::__private::sqlx::Database>::ArgumentBuffer,
+            ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError> {
+                <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Any>>::encode(self.into_inner(), buf)
+            }
+
             fn encode_by_ref(
                 &self,
                 buf: &mut <$crate::__private::sqlx::Any as $crate::__private::sqlx::Database>::ArgumentBuffer,
@@ -156,6 +163,13 @@ macro_rules! __impl_sqlx_any {
         where
             $inner: for<'a> $crate::__private::sqlx::Encode<'a, $crate::__private::sqlx::Any>,
         {
+            fn encode(
+                self,
+                buf: &mut <$crate::__private::sqlx::Any as $crate::__private::sqlx::Database>::ArgumentBuffer,
+            ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError> {
+                <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Any>>::encode(self.into_inner(), buf)
+            }
+
             fn encode_by_ref(
                 &self,
                 buf: &mut <$crate::__private::sqlx::Any as $crate::__private::sqlx::Database>::ArgumentBuffer,
@@ -211,6 +225,13 @@ macro_rules! __impl_sqlx_mysql {
         }
 
         impl $crate::__private::sqlx::Encode<'_, $crate::__private::sqlx::MySql> for $name {
+            fn encode(
+                self,
+                buf: &mut <$crate::__private::sqlx::MySql as $crate::__private::sqlx::Database>::ArgumentBuffer,
+            ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError> {
+                <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::MySql>>::encode(self.into_inner(), buf)
+            }
+
             fn encode_by_ref(
                 &self,
                 buf: &mut <$crate::__private::sqlx::MySql as $crate::__private::sqlx::Database>::ArgumentBuffer,
@@ -251,6 +272,13 @@ macro_rules! __impl_sqlx_mysql {
         where
             $inner: for<'a> $crate::__private::sqlx::Encode<'a, $crate::__private::sqlx::MySql>,
         {
+            fn encode(
+                self,
+                buf: &mut <$crate::__private::sqlx::MySql as $crate::__private::sqlx::Database>::ArgumentBuffer,
+            ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError> {
+                <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::MySql>>::encode(self.into_inner(), buf)
+            }
+
             fn encode_by_ref(
                 &self,
                 buf: &mut <$crate::__private::sqlx::MySql as $crate::__private::sqlx::Database>::ArgumentBuffer,
@@ -308,6 +336,13 @@ macro_rules! __impl_sqlx_postgres {
         }
 
         impl $crate::__private::sqlx::Encode<'_, $crate::__private::sqlx::Postgres> for $name {
+            fn encode(
+                self,
+                buf: &mut <$crate::__private::sqlx::Postgres as $crate::__private::sqlx::Database>::ArgumentBuffer,
+            ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError> {
+                <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Postgres>>::encode(self.into_inner(), buf)
+            }
+
             fn encode_by_ref(
                 &self,
                 buf: &mut <$crate::__private::sqlx::Postgres as $crate::__private::sqlx::Database>::ArgumentBuffer,
@@ -350,6 +385,13 @@ macro_rules! __impl_sqlx_postgres {
         where
             $inner: for<'a> $crate::__private::sqlx::Encode<'a, $crate::__private::sqlx::Postgres>,
         {
+            fn encode(
+                self,
+                buf: &mut <$crate::__private::sqlx::Postgres as $crate::__private::sqlx::Database>::ArgumentBuffer,
+            ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError> {
+                <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Postgres>>::encode(self.into_inner(), buf)
+            }
+
             fn encode_by_ref(
                 &self,
                 buf: &mut <$crate::__private::sqlx::Postgres as $crate::__private::sqlx::Database>::ArgumentBuffer,
@@ -405,6 +447,13 @@ macro_rules! __impl_sqlx_sqlite {
         }
 
         impl $crate::__private::sqlx::Encode<'_, $crate::__private::sqlx::Sqlite> for $name {
+            fn encode(
+                self,
+                buf: &mut <$crate::__private::sqlx::Sqlite as $crate::__private::sqlx::Database>::ArgumentBuffer,
+            ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError> {
+                <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Sqlite>>::encode(self.into_inner(), buf)
+            }
+
             fn encode_by_ref(
                 &self,
                 buf: &mut <$crate::__private::sqlx::Sqlite as $crate::__private::sqlx::Database>::ArgumentBuffer,
@@ -445,6 +494,13 @@ macro_rules! __impl_sqlx_sqlite {
         where
             $inner: for<'a> $crate::__private::sqlx::Encode<'a, $crate::__private::sqlx::Sqlite>,
         {
+            fn encode(
+                self,
+                buf: &mut <$crate::__private::sqlx::Sqlite as $crate::__private::sqlx::Database>::ArgumentBuffer,
+            ) -> Result<$crate::__private::sqlx::encode::IsNull, $crate::__private::sqlx::error::BoxDynError> {
+                <$inner as $crate::__private::sqlx::Encode<$crate::__private::sqlx::Sqlite>>::encode(self.into_inner(), buf)
+            }
+
             fn encode_by_ref(
                 &self,
                 buf: &mut <$crate::__private::sqlx::Sqlite as $crate::__private::sqlx::Database>::ArgumentBuffer,
@@ -491,6 +547,66 @@ mod tests {
         pub struct MyId<T, U>;
     );
     crate::impl_sqlx!(MyId<T, U>);
+
+    // Binding an ID by value must reach the inner type's by-value `encode`,
+    // which lets a driver take ownership (SQLite wraps an owned `String` or
+    // `Vec<u8>` as it is, but clones it on the by-reference path).
+    #[cfg(feature = "sqlite")]
+    mod by_value {
+        use super::MyId;
+        use sqlx::encode::IsNull;
+        use sqlx::error::BoxDynError;
+        use sqlx::sqlite::{SqliteArguments, SqliteArgumentsBuffer, SqliteTypeInfo};
+        use sqlx::{Arguments, Encode, Sqlite, Type};
+        use std::cell::Cell;
+
+        thread_local! {
+            static CALLS: Cell<(u32, u32)> = const { Cell::new((0, 0)) };
+        }
+
+        /// An inner type that records which `Encode` method was called.
+        struct Probe;
+
+        impl Type<Sqlite> for Probe {
+            fn type_info() -> SqliteTypeInfo {
+                <i64 as Type<Sqlite>>::type_info()
+            }
+        }
+
+        impl Encode<'_, Sqlite> for Probe {
+            fn encode(self, buf: &mut SqliteArgumentsBuffer) -> Result<IsNull, BoxDynError> {
+                CALLS.with(|c| c.set((c.get().0 + 1, c.get().1)));
+                <i64 as Encode<Sqlite>>::encode(1, buf)
+            }
+
+            fn encode_by_ref(
+                &self,
+                buf: &mut SqliteArgumentsBuffer,
+            ) -> Result<IsNull, BoxDynError> {
+                CALLS.with(|c| c.set((c.get().0, c.get().1 + 1)));
+                <i64 as Encode<Sqlite>>::encode(1, buf)
+            }
+        }
+
+        struct Tag;
+
+        #[test]
+        fn test_bind_by_value_reaches_the_inner_encode() {
+            CALLS.with(|c| c.set((0, 0)));
+            let mut args = SqliteArguments::default();
+            args.add(MyId::<Tag, Probe>::new(Probe)).unwrap();
+            assert_eq!(CALLS.with(Cell::get), (1, 0));
+        }
+
+        #[test]
+        fn test_bind_by_reference_still_reaches_encode_by_ref() {
+            CALLS.with(|c| c.set((0, 0)));
+            let id = MyId::<Tag, Probe>::new(Probe);
+            let mut buf = SqliteArgumentsBuffer::default();
+            Encode::<Sqlite>::encode_by_ref(&id, &mut buf).unwrap();
+            assert_eq!(CALLS.with(Cell::get), (0, 1));
+        }
+    }
 
     // Only the driver modules that have a UUID column type use these.
     #[cfg(any(feature = "mysql", feature = "postgres"))]
