@@ -119,6 +119,27 @@ async fn do_something_with_sqlx(conn: sqlx::AnyPool) -> Result<(), sqlx::Error> 
 }
 ```
 
+## libsql support
+
+Use the [kubetsu-libsql](https://crates.io/crates/kubetsu-libsql) crate to bind ID values as query parameters with [libsql](https://crates.io/crates/libsql). It covers the write side only: libsql's `FromValue` is sealed, so read a column as the inner type and wrap it with `new`.
+
+```rust,no_run,ignore
+kubetsu::define_id!(pub struct Id<T, U>;);
+kubetsu_libsql::impl_libsql!(Id<T, U>);
+
+struct User;
+type UserId = Id<User, i64>;
+
+async fn do_something_with_libsql(conn: &libsql::Connection, id: UserId) -> libsql::Result<()> {
+    let mut rows = conn.query("SELECT id FROM users WHERE id = ?1", [&id]).await?;
+    if let Some(row) = rows.next().await? {
+        let found = UserId::new(row.get::<i64>(0)?);
+        assert_eq!(found, id);
+    }
+    Ok(())
+}
+```
+
 ## fake support
 
 Use the [kubetsu-fake](https://crates.io/crates/kubetsu-fake) crate to generate dummy values with [fake](https://crates.io/crates/fake).
@@ -144,9 +165,9 @@ fn main() {
 
 `kubetsu` and `kubetsu-serde` work in `#![no_std]` crates. The
 `define_id!` macro expands to `::core::*` paths only, so it has no
-dependency on `std` or `alloc`. Adapter crates `kubetsu-fake` and
-`kubetsu-sqlx` remain `std`-only because their upstream dependencies
-require `std`.
+dependency on `std` or `alloc`. Adapter crates `kubetsu-fake`,
+`kubetsu-sqlx` and `kubetsu-libsql` remain `std`-only because their
+upstream dependencies require `std`.
 
 # Install
 
@@ -155,6 +176,7 @@ $ cargo add kubetsu
 $ cargo add kubetsu-serde   # if you need serde support
 $ cargo add kubetsu-fake    # if you need fake support
 $ cargo add kubetsu-sqlx    # if you need sqlx support
+$ cargo add kubetsu-libsql  # if you need libsql support
 ```
 
 # License
