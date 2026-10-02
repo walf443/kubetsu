@@ -5,9 +5,9 @@
 //! unifies into every member that depends on libsql at all. `core` links
 //! libsql-ffi's bundled SQLite, which defines the same `sqlite3_*` symbols
 //! as the libsqlite3-sys that sqlx links here, so the test binary of this
-//! crate would carry two SQLites (the macOS linker warns and picks one, GNU
-//! ld refuses). Coexistence with serde and fake is covered in
-//! kubetsu-libsql's own tests instead.
+//! crate would carry two SQLites. On macOS the linker warns and picks one;
+//! GNU ld has not been tried here and is expected to refuse. Coexistence
+//! with serde and fake is covered in kubetsu-libsql's own tests instead.
 
 #[cfg(test)]
 mod tests {
